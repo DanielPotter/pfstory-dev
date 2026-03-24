@@ -76,15 +76,21 @@ getStoryPrefixData(source) =>
   if (codeDebug) console.log("getStoryPrefixData : START : " + source);
   if (codeDebug) console.log("getStoryPrefixData : START : " + (source === "inline"));           
   let lines = [];
-  let genre = storyGenreSelectEl.value;
-  let subGenre = storySubGenreSelectEl.value;
+  let genre = storyGenreSelectEl.value === 'custom' ? storyGenreInputEl.value : storyGenreSelectEl.value;
+  let subGenre = storySubGenreSelectEl.value === 'custom' ? storySubGenreInputEl.value : storySubGenreSelectEl.value;
   let style = storyWritingStyleSelectEl.value;
   let paragraphs = storyWritingLengthEl.value || "1";
 
-  if(genre !== "default") {
-    let genreData = genreInstructions[genre];
-    lines.push(`Focus the genre on ${genreData}.`);
-    if(subGenre !== "default") {let subGenreData = genreInstructions[subGenre]; lines.push(`Also incorporate elements of ${subGenreData}.`);}
+  if (genre !== "default" && genre !== "") {
+    // If it's custom, use the string directly. If not, look it up in instructions.
+    let genreData = (storyGenreSelectEl.value === 'custom') ? genre : genreInstructions[genre];
+    if (genreData) {lines.push(`Focus the genre on ${genreData}.`);}
+    if (subGenre !== "default" && subGenre !== "") {
+      let subGenreData = (storySubGenreSelectEl.value === 'custom') ? subGenre : genreInstructions[subGenre];
+      if (subGenreData) {
+        lines.push(`Also incorporate elements of ${subGenreData}.`);
+      }
+    }    
     lines.push(`Make sure to weave in any elements the user adds in 'OVERVIEW'.`);
   }
 
@@ -216,9 +222,9 @@ sharedInstructionPrefix // stuff that we put before all tasks - i.e. general con
   - When regenerating text, the new idea should be completely different from before.
   - Do not perform actions on thre my behalf unless the player explicitly asks you to.
   - You should end your responses abruptly at points where a player decision is needed.
-  - Thoughts: Internal thoughts should appear as `My thoughts` or `"My Thoughts"`, NEVER like "`My Thoughts`".
+  - Thoughts: Internal thoughts should appear as `My thoughts` or `"My Thoughts"`.
   - Spoken Words: Dialogue should appear in quotation marks, e.g., "Me speaking".
-  - Text Messages / Written Communication: Messages should appear in quotation marks with a label, e.g., Text from Ashley: "Text message here", NEVER like *"Text message here"*.
+  - Text Messages / Written Communication: Messages should appear in quotation marks with a label, e.g., Text from Ashley: "Text message here".
   - Always follow these rules consistently for every character and situation.
   // NOTE: This line and the lines below are 'comments' - i.e. they're ignored by the Perchance engine due to the "//" at the start. The lines below are historical 'tips' that I'm not using anymore, but I'm keeping them here in case I need to enable them at some point.
   // - Use the 'OVERVIEW' to deeply intuit the story arc of the game that the player wants to play. You should aim to direct your simulation of the world toward an experience that you think the player is likely to enjoy, based on their past actions.
@@ -675,6 +681,8 @@ normalizeStoryData(data) =>
     storyWritingLength: (data.storyWritingLength ?? ""),
     storyGenreSelect: (data.storyGenreSelect ?? ""),
     storySubGenreSelect: (data.storySubGenreSelect ?? ""),
+    storyGenreInput: (data.storyGenreInput ?? ""),
+    storySubGenreInput: (data.storySubGenreInput ?? ""),
     storyArcInstruction: (data.storyArcInstruction ?? ""),
     emDashesComfirmation: (data.emDashesComfirmation ?? ""),
     shortcutButtons: (data.shortcutButtons ?? ""),
@@ -792,6 +800,8 @@ getCurrentStoryDataForStorage() =>
     storyWritingLength: storyWritingLengthEl.value,
     storyGenreSelect: storyGenreSelectEl.value,
     storySubGenreSelect: storySubGenreSelectEl.value,
+    storyGenreInput: storyGenreInputEl.value,
+    storySubGenreInput: storySubGenreInputEl.value,
     storyArcInstruction: storyArcInstructionEl.value,
     emDashesComfirmation: localStorage.emDashesComfirmation || "",
     shortcutButtons: JSON.parse(localStorage.shortcutButtons || "[]"),
@@ -2886,7 +2896,6 @@ loadChatDataIntoInputAreas(data) =>
   storyCustomWritingStyleCtn.hidden = data.storyWritingStyle !== "custom";
   storyWritingStyleResponseInputEl.value = data.storyWritingStyleResponseInput || "";
   storyWritingStyleCustomInputEl.value = data.storyWritingStyleCustomInput || "";
-
   storyPerspectiveSelectEl.value = data.storyPerspective || "second";
   difficultyModeEl.value = data.difficultyMode || "";
   storyGameModeSelectEl.value = data.gameMode || "";
@@ -2894,6 +2903,11 @@ loadChatDataIntoInputAreas(data) =>
   storyWritingLengthEl.value = data.storyWritingLength || "1",
   storyGenreSelectEl.value = data.storyGenreSelect || "default",
   storySubGenreSelectEl.value = data.storySubGenreSelect || "default",
+  storyCustomGenreCtn.hidden = (data.storyGenreSelect !== "custom" && data.storySubGenreSelect !== "custom");
+  storyGenreInputEl.hidden = data.storyGenreSelect !== "custom";
+  storySubGenreInputEl.hidden = data.storySubGenreSelect !== "custom";
+  storyGenreInputEl.value = data.storyGenreInput || "",
+  storySubGenreInputEl.value = data.storySubGenreInput || "",
   setParagraphLimitSelectValue(data.paragraphLimit);
   localStorage.shortcutButtons = JSON.stringify(data.shortcutButtons || []);
   if (codeDebug) console.log("loadChatDataIntoInputAreas : shortcutButtons");
@@ -3236,6 +3250,8 @@ getCurrentStoryData() =>
     storyWritingLength: storyWritingLengthEl.value,
     storyGenreSelect: storyGenreSelectEl.value,
     storySubGenreSelect: storySubGenreSelectEl.value,
+    storyGenreInput: storyGenreInputEl.value,
+    storySubGenreInput: storySubGenreInputEl.value,
     emDashesComfirmation: localStorage.emDashesComfirmation,
     storyArcInstruction: storyArcInstructionEl.value,
     shortcutButtons: JSON.parse(localStorage.shortcutButtons || "[]"),

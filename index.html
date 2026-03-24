@@ -604,11 +604,12 @@ if(localStorage.seenTopStuffOnce) {
         <div class="modalSectionTitle">Genre</div>
         <div class="modalRow themeInlineRow">
           <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storyGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyGenreSelect=this.value;">
+            <select id="storyGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyGenreSelect=this.value; storyGenreInputEl.hidden = (this.value !== 'custom'); storyCustomGenreCtn.hidden = !(this.value === 'custom' || storySubGenreSelectEl.value === 'custom');">
               <option value="default" selected>Default (no change)</option>
               <option value="adventure">Adventure</option>
               <option value="comedy">Comedy</option>
               <option value="contemporary">Contemporary</option>
+              <option value="custom">Custom</option>
               <option value="cyberpunk">Cyberpunk</option>
               <option value="dark_fantasy">Dark Fantasy</option>
               <option value="dystopian">Dystopian</option>
@@ -638,11 +639,12 @@ if(localStorage.seenTopStuffOnce) {
         <div class="modalSectionTitle">Sub-Genre</div>
         <div class="modalRow themeInlineRow">
           <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storySubGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storySubGenreSelect=this.value;">
+            <select id="storySubGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storySubGenreSelect=this.value; storySubGenreInputEl.hidden = (this.value !== 'custom'); storyCustomGenreCtn.hidden = !(this.value === 'custom' || storyGenreSelectEl.value === 'custom');">
               <option value="default" selected>None</option>
               <option value="adventure">Adventure</option>
               <option value="comedy">Comedy</option>
               <option value="contemporary">Contemporary</option>
+              <option value="custom">Custom</option>
               <option value="cyberpunk">Cyberpunk</option>
               <option value="dark_fantasy">Dark Fantasy</option>
               <option value="dystopian">Dystopian</option>
@@ -665,6 +667,23 @@ if(localStorage.seenTopStuffOnce) {
               <option value="war">War</option>
               <option value="western">Western</option>  
             </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="storyCustomGenreCtn" class="modalSection" hidden> <!--Custom Genre-->
+      <div class="modalSectionTitle">Custom Genre</div>
+      <div class="modalRow">
+        <div class="modalField">
+          <div class="fontFieldInputRow">
+            <input id="storyGenreInputEl" placeholder="e.g. 'Brief description of custom genre'" hidden>
+          </div>
+        </div>
+      </div>
+      <div class="modalRow">
+        <div class="modalField">
+          <div class="fontFieldInputRow">
+            <input id="storySubGenreInputEl" placeholder="e.g. 'Brief description of custom sub-genre'" hidden>
           </div>
         </div>
       </div>
@@ -2093,7 +2112,7 @@ function initTabbedComments() {
 
 <!-- <!-- DARK MODE STUFF -->
 <div id="leftFooterStickyButtonsCtn" style="position:fixed; bottom:0.5rem; left:0.5rem; z-index:10;">
-<button id="darkModeBtn" style="cursor:pointer;" onclick="window.toggleManualDarkMode(); if(commentsEl.innerHTML.trim()){initTabbedComments()};">🌃</button>
+<button id="darkModeBtn" style="cursor:pointer;" onclick="window.toggleManualDarkMode(); if(commentsEl.innerHTML.trim()){initTabbedComments()};"></button>
 </div>
 <script>
 function toggleManualDarkMode() {
@@ -2115,7 +2134,7 @@ function getCurrentColorScheme() {
 }
 function setColorScheme(scheme) {
   if(scheme !== "dark" && scheme !== "light") throw new Error("scheme should be 'light' or 'dark'");
-  document.querySelector("#darkModeBtn").textContent = (scheme === "dark" ? "🌄" : "🌃");
+  document.querySelector("#darkModeBtn").innerHTML = (scheme === "dark" ? [icon("sun")] : [icon("moon")]);
   window.colorScheme = scheme;
   
   console.log("Color Scheme: " + document.documentElement.dataset["scheme"]);

@@ -1,3 +1,8 @@
+## 2026.03.23
+Features:
+- Implement Custom Genre/Sub-Genre
+- UI Fixes
+
 ## 2026.03.20-4
 Fix:
 - Suggestions load fix
