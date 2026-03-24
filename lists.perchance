@@ -1,4 +1,3 @@
-
 $meta // this is the stuff that appears in search engines, social media preview cards, browser tab title, etc.
   header
     mode = minimal
@@ -2620,6 +2619,7 @@ async autoUpdateBibleSection(options) =>
   if (codeDebug) console.log("autoUpdateBibleSection");
   if (codeDebug) console.log("autoUpdateBibleSection : window :");
   if (codeDebug) console.log(window.appNotebookDate);
+  const capturedStoryId = window.currentStoryId ?? window.storyManager?.currentId;
   let cleanTitle = options.title.replace(/[<>\s\/]/g,'');
   window.generatingBibleSection[options.title] = true;
   if (codeDebug) console.log("autoUpdateBibleSection : cleanTitle :" + cleanTitle);
@@ -2701,7 +2701,8 @@ async autoUpdateBibleSection(options) =>
     }
   });
 
-    let bibleData;
+  let bibleData;
+  let generatedContent = null;
   try {
     window.generatingBibleSection[options.title] = true;
     if (codeDebug) console.log("autoUpdateBibleSection : try : " + window.generatingBibleSection[options.title]);
@@ -2710,6 +2711,7 @@ async autoUpdateBibleSection(options) =>
     
     if (bibleData.stopReason === 'error' || bibleData.stopReason === 'user') {
       if (codeDebug) console.log("autoUpdateBibleSection : generateBibleSection : ifstop");
+      generatedContent = targetTextarea.trim();
     } else {
       if (codeDebug) console.log("autoUpdateBibleSection : try : ifstop : else");
       let finalValue = targetTextarea.trim();
@@ -2720,7 +2722,16 @@ async autoUpdateBibleSection(options) =>
     console.error("AI call failed:", e);
   } finally {    
     if (codeDebug) console.log("autoUpdateBibleSection : finally");
-    setNotebookDataForScope("bible", data);
+    if (generatedContent != null && curentStoryId === capturedStoryId) {
+      let freshData = getNotebookDataForScope("bible");
+      let freshTab = freshData.tabs.find(t => t.title === options.title);
+      if (freshTab) {
+        freshTab.content = generatedContent;
+        freshTab.lastEditedTime = Date.now();
+        setNotebookDataForScope("bible", freshData);
+        requestSaveCurrentStory({debounceMs: 400});
+      }
+    }
     Object.assign(openNotepadBtn, {
       disabled: false,
       innerHTML: `${icon("table-list")} Notepad`,
@@ -2741,10 +2752,12 @@ async autoUpdateBibleSection(options) =>
 async generateBibleSection(options) =>
   if (codeDebug) console.log("generateBibleSection");  
   saveNotepadEditorToActiveTab();
+  const targetTabId = data.activeTabId;
   bibleOptionalPrompt = "";
   bibleOptionalPrompt = prompt("(Optional) Specify what information you want tracked besides basics or just click OK.");
   if(bibleOptionalPrompt === null) return; // they clicked cancel
   if (options === undefined) options = {};
+  
   let bibleSection = window.notepadTabsSelectEl.selectedOptions[0].innerText;
   const storyBible = [
     "<Player Info>",
@@ -2849,7 +2862,17 @@ async generateBibleSection(options) =>
     targetTextarea.placeholder = originalPlaceholder;
   } finally {
     targetTextarea.placeholder = originalPlaceholder;
-    saveNotepadEditorToActiveTab();
+    if (bibleData && bibleData.stopReason !== 'error' && bibleData.stopReason !== 'user') {
+      let scope = getNotebookScope();
+      let freshData = getNotebookDataForScope(scope);
+      let targetTab = freshData.tabs.find(t => t.id === targetTabId);
+      if (targetTab) {
+        targetTab.content = window.notepadEditorEl.value.trim();
+        targetTab.lastEditedTime = Date.now();
+        setNotebookDataForScope(scope, freshData);
+        requestSaveCurrentStory({debounceMs: 400});
+      }
+    }
     storyBibleRegenBtn.hidden = (window.notepadEditorEl.value.trim() === "");
     storyBibleRegenBtn.disabled = false;
     storyBibleDeleteBtn.hidden = (window.notepadEditorEl.value.trim() === "");

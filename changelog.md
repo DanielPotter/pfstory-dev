@@ -1,3 +1,7 @@
+## 2026.03.24
+Fix:
+- Story Bible Code cleanup (leak fix attempt)
+
 ## 2026.03.23
 Features:
 - Implement Custom Genre/Sub-Genre
