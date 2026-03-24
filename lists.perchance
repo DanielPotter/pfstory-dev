@@ -2666,7 +2666,7 @@ async autoUpdateBibleSection(options) =>
   }
 
   window.generatingBibleSectionName = options.title;
-  let targetTextarea = "";
+  let buffer = "";
   window.existingSectionContentForPrompt = tab.content.trim();
 
     if (!isRegeneration) {
@@ -2696,7 +2696,7 @@ async autoUpdateBibleSection(options) =>
     instruction: bibleAutoUpdatePrompt.evaluateItem,
     onChunk: (data) => {
       if (!data.isFromStartWith) {
-        targetTextarea += data.textChunk;
+        buffer += data.textChunk;
       }
     }
   });
@@ -2715,14 +2715,14 @@ async autoUpdateBibleSection(options) =>
     } else {
       if (codeDebug) console.log("autoUpdateBibleSection : try : ifstop : else");
       let finalValue = targetTextarea.trim();
-      targetTextarea = finalValue;
-      tab.content = finalValue;
+      buffer = finalValue;
+      tab.content = buffer.trim();
     }
   } catch (e) {
     console.error("AI call failed:", e);
   } finally {    
     if (codeDebug) console.log("autoUpdateBibleSection : finally");
-    if (generatedContent != null && curentStoryId === capturedStoryId) {
+    if (generatedContent != null && currentStoryId === capturedStoryId) {
       let freshData = getNotebookDataForScope("bible");
       let freshTab = freshData.tabs.find(t => t.title === options.title);
       if (freshTab) {
@@ -2752,8 +2752,9 @@ async autoUpdateBibleSection(options) =>
 async generateBibleSection(options) =>
   if (codeDebug) console.log("generateBibleSection");  
   saveNotepadEditorToActiveTab();
-  const targetTabId = data.activeTabId;
-  bibleOptionalPrompt = "";
+  const storyId = window.currentStoryId ?? window.storyManager?.currentId;
+  const scope = getNotebookScope();
+  const targetTabId = getNotebookDataForScope(scope).activeTabId;
   bibleOptionalPrompt = prompt("(Optional) Specify what information you want tracked besides basics or just click OK.");
   if(bibleOptionalPrompt === null) return; // they clicked cancel
   if (options === undefined) options = {};
@@ -2791,14 +2792,6 @@ async generateBibleSection(options) =>
     if (codeDebug) console.log("generateBibleSection : placeholderIndex : " + placeholderIndex);
     window.newEventsForPrompt = placeholderIndex === -1 ? storyText.trim() : storyText.substring(placeholderIndex + bibleMarker.length).trim();
   }
-
-  // if (!window.newEventsForPrompt && storyText.trim()) {
-  //   if (codeDebug) console.log("?");
-  //   if (codeDebug) console.log(!window.newEventsForPrompt);
-  //   if (codeDebug) console.log(storyText.trim());
-  //   window.generatingBibleSection[bibleSection] = false;
-  //   return;
-  // }
   
   window.generatingBibleSectionName = bibleSection;
   let targetTextarea = window.notepadEditorEl;
@@ -2863,7 +2856,6 @@ async generateBibleSection(options) =>
   } finally {
     targetTextarea.placeholder = originalPlaceholder;
     if (bibleData && bibleData.stopReason !== 'error' && bibleData.stopReason !== 'user') {
-      let scope = getNotebookScope();
       let freshData = getNotebookDataForScope(scope);
       let targetTab = freshData.tabs.find(t => t.id === targetTabId);
       if (targetTab) {
