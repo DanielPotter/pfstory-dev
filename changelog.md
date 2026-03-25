@@ -1,3 +1,10 @@
+## 2026.03.25
+Features:
+- Added "new story" prompt to help show settings before starting new stories
+
+Fix:
+- various ui fixes
+
 ## 2026.03.24
 Fix:
 - Story Bible Code cleanup (leak fix attempt)

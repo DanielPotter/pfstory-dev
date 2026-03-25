@@ -897,6 +897,7 @@ updateStoryHeaderVisibility() =>
   } catch(e) { console.error(e); }
 
 updateOverviewToggleText() =>
+  if(codeDebug){console.log("updateOverviewToggleText")}
   try {
     if(typeof toggleOverviewVisibilityBtn === "undefined") return;
     let hidden = !!storyOverviewEl?.hidden;
@@ -904,8 +905,8 @@ updateOverviewToggleText() =>
   } catch(e) { console.error(e); }
 
 toggleOverviewVisibility() =>
+  if(codeDebug){console.log("toggleOverviewVisibility")}
   storyOverviewEl.hidden = !storyOverviewEl.hidden;
-  storyOverviewPaddingEl.hidden = !storyOverviewPaddingEl.hidden;
   updateOverviewToggleText();
 
 formatRelativeTime(ts) =>
@@ -2089,11 +2090,13 @@ regenerateLast() =>
   return continueStory({regen:true});
 
 async continueStory(opts) =>
+  if(codeDebug) {console.log("Running Continue Story")};
   if(!opts) opts = {};
   if(window.currentlyGenerating) return; // we already disable buttons below, but this is just for extra safety
-  if(localStorage.emDashesComfirmation !== "1") {
-    if(!confirm(`Note: This is your first time running a new story. This Generator cleans up dashes from the text, including imported stores. if you don't want this. hit 'Cancel', and enable the option under Settings.\n\nIf you've already set it to your desired settting, you can hit 'OK'.`)) return;
-    localStorage.emDashesComfirmation = "1";
+  if(opts.welcomeComplete) {localStorage.welcomeComplete = "1";}
+  if(localStorage.welcomeComplete !== "1") {
+    welcomeModalEl.hidden = false;
+    return;
   }
   window.currentlyGenerating = true;
 
@@ -2368,7 +2371,7 @@ async continueStory(opts) =>
     if (storyPerspective === "third") {storyStartWith = "They"};
     window.includeStartWithInOutput = true;
     window.lastGenerationStreamObj = ai({
-      instruction: `Write the opening paragraph of a text adventure RPG based on this instruction/idea by the player: "${storyOverviewEl.value.trim() || "Something unusual and fun"}"\nWrite one paragraph only. This is just the opening paragraph - the *start* of the story, so don't progress too quickly. Avoid cringe/overly grandiose phrasing. Start in a specific/concrete situation, perhaps with some character dialogue. Don't reveal key story details yet.${Math.random() < 0.5 ? " Include some character dialogue." : ""}`,
+      instruction: `Write the opening paragraph of a text adventure RPG based on this instruction/idea by the player: "${storyOverviewEl.value.trim() || "Something unusual and fun"}"\n${getCombinedStoryBibleText()}\nWrite one paragraph only. This is just the opening paragraph - the *start* of the story, so don't progress too quickly. Avoid cringe/overly grandiose phrasing. Start in a specific/concrete situation, perhaps with some character dialogue. Don't reveal key story details yet.${Math.random() < 0.5 ? " Include some character dialogue." : ""}`,
       startWith: storyStartWith,
       stopSequences: ["\n"],
       onStart: generationEventHandlers.onStart,
@@ -4358,6 +4361,7 @@ removeCustomBackground(i, scope) =>
   renderCustomMediaLists();
 
 async updateBackgroundVisual(userInitiated) =>
+  if(codeDebug){console.log("updateBackgroundVisual")};
   if(typeof backgroundImageCtn === "undefined") return;
   let url = (window.currentBackgroundVisual || "").trim();
   if(url) {
@@ -4382,17 +4386,16 @@ async updateBackgroundVisual(userInitiated) =>
       backgroundVideoEl.pause();
     }
     document.body.classList.add("backgroundImageIsActive");
-    let editorVisible = (typeof storyGenerationAreaEl !== "undefined" && !storyGenerationAreaEl.hidden);
+    let editorVisible = (typeof storyGenerationAreaEl !== "undefined" && !storyGenerationAreaEl.hidden);    
+    if(codeDebug){console.log("updateBackgroundVisual : editorVisible : "+editorVisible)};
     if(editorVisible) {
       topStuffEl.hidden = true;
       toggleOverviewVisibilityEl.hidden = false;
       storyOverviewEl.hidden = true;
-      storyOverviewPaddingEl.hidden = false;
     } else {
       topStuffEl.hidden = false;
       toggleOverviewVisibilityEl.hidden = true;
       storyOverviewEl.hidden = false;
-      storyOverviewPaddingEl.hidden = true;
     }
     window.lastBackgroundVisualUrl = url;
     window.lastBackgroundIsVideo = isVideo;
@@ -4403,8 +4406,7 @@ async updateBackgroundVisual(userInitiated) =>
     backgroundVideoEl.pause();
     document.body.classList.remove("backgroundImageIsActive");
     topStuffEl.hidden = false;
-    storyOverviewEl.hidden = false;    
-    storyOverviewPaddingEl.hidden = true;
+    storyOverviewEl.hidden = !!storyOverviewEl?.hidden || false;
     window.lastBackgroundVisualUrl = "";
     window.lastBackgroundIsVideo = false;
   }
@@ -4532,6 +4534,7 @@ openStorySettingsModal() =>
   if(typeof themeAdvancedSection !== "undefined" && !themeAdvancedSection.hidden) {
     ensureThemeAdvancedReady();
   }
+  welcomeResetEl.hidden = !(localStorage.welcomeComplete === '1')
   storySettingsModalEl.hidden = false;
 
 closeStorySettingsModal(opts) =>
