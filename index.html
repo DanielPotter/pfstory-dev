@@ -111,6 +111,7 @@
   window.bibleCachePrompt = null;
   window.bibleCacheText = null;
   window.bibleCacheDirty = true;
+  window.lastActionWithShortcut = false;
   window.lastBibleGenerationData = window.lastBibleGenerationData || {};
   window.currentCustomMusic = window.currentCustomMusic || [];
   window.currentCustomBackgrounds = window.currentCustomBackgrounds || [];
@@ -218,7 +219,7 @@ if(localStorage.seenTopStuffOnce) {
     <button id="storyBibleStopBtn" hidden onclick="if(window.currentBibleGeneration) window.currentBibleGeneration.stop();">[icon("circle-stop","color:var(--danger);")] Stop</button>
     <button id="storyBibleRegenBtn" onclick="regenerateBibleSection()">[icon("arrows-rotate","color:var(--info)")] Regenerate</button>
     <button id="storyBibleGenerateBtn" onclick="generateBibleSection()">✨ Auto-Generate</button>
-    <button class="btn-icon" id="storyBibleDeleteBtn" onclick="{notepadEditorEl.value=''}; saveNotepadEditorToActiveTab(); storyBibleRegenBtn.hidden=true; storyBibleGenerateBtn.hidden=false;">[icon("trash")]</button>
+    <button class="btn-icon" id="storyBibleDeleteBtn" onclick="{notepadEditorEl.value=''}; saveNotepadEditorToActiveTab(); storyBibleRegenBtn.hidden=true; storyBibleGenerateBtn.hidden=false;">[icon("trash","color:var(--danger);")]</button>
     <label style="font-size:0.75rem; line-height:1.2;"><input id="storyBibleAutoUpdateCheckBox" type="checkbox" oninput="let key = 'storyBibleAutoCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,''); localStorage[key] = this.checked ? '1' : '';"></br>Auto Update</label>
   </div>
   <div id="notepadEditorCtn"></div>
@@ -242,8 +243,8 @@ if(localStorage.seenTopStuffOnce) {
     </div>
     <button id="storySettingsBtn" onclick="openStorySettingsModal()">Open Story Settings</button>
     <div class="modalActions" style="margin-top:1.0rem;">      
-      <button onclick="welcomeModalEl.hidden=true">Cancel</button>
-      <button id="storyWelcomeContinueBtn" onclick="continueStory({welcomeComplete:true}); welcomeModalEl.hidden=true">Continue</button>
+      <button onclick="welcomeModalEl.hidden=true" style="background:var(--danger);">Cancel</button>
+      <button id="storyWelcomeContinueBtn" onclick="continueStory({welcomeComplete:true}); welcomeModalEl.hidden=true" style="background:var(--success);">Continue</button>
     </div>
   </div></div>
 <div id="exportModalEl" class="modalOverlay" hidden>
@@ -1127,7 +1128,7 @@ if(localStorage.seenTopStuffOnce) {
 
   <div style="width:100%; display:flex; margin-top:0.25rem;">
     <textarea id="whatHappensNextEl" oninput="handleWhatHappensNextInput()" onkeydown="if(event.key==='Enter') { event.preventDefault(); generateBtn.click(); }" placeholder="What should happen next? (optional)" style="display:block; width:100%; font-size:0.8rem; height:3rem; resize:vertical;"></textarea> 
-    <button class="btn" id="deleteWhatHappensNextBtn" onclick="if (!toggleSendStoryInputCheckbox.checkbox) {whatHappensNextEl.value='';}handleWhatHappensNextInput(); requestSaveCurrentStory({immediate:true}); this.hidden=true;" title="Delete the current 'what will you do next' text." style="margin-left:0.25rem;">[icon("trash")]</button>
+    <button class="btn" id="deleteWhatHappensNextBtn" onclick="if (!toggleSendStoryInputCheckbox.checkbox) {whatHappensNextEl.value='';}handleWhatHappensNextInput(); requestSaveCurrentStory({immediate:true}); this.hidden=true;" title="Delete the current 'what will you do next' text." style="margin-left:0.25rem;">[icon("trash","color:var(--danger);")]</button>
     <script>setTimeout(() => { deleteWhatHappensNextBtn.hidden=!whatHappensNextEl.value.trim(); }, 100);</script>
     <div id="whatHappensNextSuggestionsOuterWrapper" style="margin-left:0.25rem; position:relative;">
       <button class="btn" id="generateWhatHappensNextIdeasBtn" onclick="generateWhatHappensNextIdeas()" style="height:100%;" title="Generate ideas about what should happen next.">[icon("lightbulb","color:#ffe070;")]</button>
@@ -1158,8 +1159,8 @@ if(localStorage.seenTopStuffOnce) {
 
   <!-- Buttons Shortcuts -->
   <div style="height:0px; width:100%; position:relative; text-align:left;">
-      <button title="Guide the adventure by specifying the next major story event" onclick="storyArcInstructionCtn.hidden=!storyArcInstructionCtn.hidden; localStorage.storyArcInstructionHidden=storyArcInstructionCtn.hidden||''; update(this)" style="margin-top:0.25rem; font-size:70%; text-shadow: 0px 0px 1px #000000;">[storyArcInstructionCtn.hidden ? '🔮' : combineEmojis('🚫', '🔮')]</button>
-      <button id="addShortcutButtonEl" title="Add a shortcut button" onclick="this.disabled=true; setTimeout(()=>this.disabled=false, 1000); showShortcutEditor()" style="margin-top:0.25rem; font-size:70%; text-shadow: 0px 0px 1px #000000;">⚡</button>
+      <button class="btn-icon" title="Guide the adventure by specifying the next major story event" onclick="storyArcInstructionCtn.hidden=!storyArcInstructionCtn.hidden; localStorage.storyArcInstructionHidden=storyArcInstructionCtn.hidden||''; update(this)" style="margin-top:0.25rem; font-size:70%; text-shadow: 0px 0px 1px #000000;">[storyArcInstructionCtn.hidden ? icon("route","color:var(--accent);") : icon("route","color:var(--danger);")]</button>
+      <button class="btn-icon" id="addShortcutButtonEl" title="Add a shortcut button" onclick="this.disabled=true; setTimeout(()=>this.disabled=false, 1000); showShortcutEditor()" style="margin-top:0.25rem; font-size:70%; text-shadow: 0px 0px 1px #000000;">[icon("bolt","color:var(--warn)")]</button> 
       <script>
         async function showShortcutEditor(opts={}) {
           
@@ -1171,6 +1172,7 @@ if(localStorage.seenTopStuffOnce) {
             data.add_type = shortcutToEdit.type;
             data.add_label = shortcutToEdit.label || "";
             data.add_insertionText = shortcutToEdit.insertionText || "";
+            data.add_promptText = shortcutToEdit.promptText || "";
             data.add_actionInsertionType = shortcutToEdit.actionInsertionType;
             data.add_storyContinuationType = shortcutToEdit.storyContinuationType;
             data.add_storyInsertionType = shortcutToEdit.storyInsertionType;
@@ -1182,6 +1184,7 @@ if(localStorage.seenTopStuffOnce) {
             if(data.page === "add") { // clear some data in case it was just on edit page
               data.label = "";
               data.insertionText = "";
+              data.prompText = "";
               data.slashCommand = "";
             }
           }
@@ -1201,6 +1204,7 @@ if(localStorage.seenTopStuffOnce) {
             add_type: {label:`Shortcut button type. <i style="opacity:0.7;">When the button is clicked, do you want to trigger a player action, or generate some story text?</i>`, type:"select", options:[{content:"⚔️ Player 𝗮𝗰𝘁𝗶𝗼𝗻 button", value:"action"}, {content:"📖 𝗦𝘁𝗼𝗿𝘆 continuation button", value:"story"}], defaultValue:defaultEdit?.type??"action", show:(d)=>!d.page || d.page==="add" || (d.edit_id && d.page==="edit")},
             add_label: {label:`Shortcut button label. <i style="opacity:0.7;">This is just the visible label/name of the button, and you can include emojis to help make your buttons more visually distinct.</i>`, type:"textLine", placeholder:``, defaultValue:defaultEdit?.label??"", show:(d)=>!d.page || d.page==="add" || (d.edit_id && d.page==="edit")},
             add_insertionText: {label:`Text to insert. <i style="opacity:0.7;">When the shortcut button is pressed, this text will be inserted. Tip: If you write <span style="white-space:pre;">{1-20}</span> then it will be replaced with a random number between 1 and 20.</i>`, type:"text", placeholder:``, defaultValue:defaultEdit?.insertionText??"", show:(d)=>!d.page || d.page==="add" || (d.edit_id && d.page==="edit")},
+            add_promptText: {label:`Text to add for AI. <i style="opacity:0.7;">This text will be added to the AI Prompt but not included in the story itself. This is useful for sending details like spell mechanics or detailed functions of actions without having to keep it in the story bible. Random Numbers still work here as well. {1-20} = random number between 1-20.</i>`, type:"text", placeholder:``, defaultValue:defaultEdit?.promptText??"", show:(d)=>!d.page || d.page==="add" || (d.edit_id && d.page==="edit")},
             add_actionInsertionType: {label:`Text insertion method. <i style="opacity:0.7;">Should the text overwrite any existing text in the action text box? Or should it get added before or after any existing text?</i>`, type:"select", options:[{content:"🆕 Replace text in input box (if any)", value:"replace"}, {content:"⬅️ Insert 𝗯𝗲𝗳𝗼𝗿𝗲 existing action text", value:"prepend"}, {content:"➡️ Insert 𝗮𝗳𝘁𝗲𝗿 existing action text", value:"append"}, {content:"✂️ Insert at cursor/caret position", value:"replace_selection"}], defaultValue:defaultEdit?.actionInsertionType??"replace", show:(d)=>d.add_type==="action" && ((d.page==="add" || !d.page) || (d.edit_id && d.page==="edit"))},
             add_storyInsertionType: {label:`Text insertion method. <i style="opacity:0.7;">Should the text get inserted as the start of a new paragraph, or added to the end of the last one?</i>`, type:"select", options:[{content:"🆕 Add it as a new paragraph", value:"new_paragraph"}, {content:"➡️ Add to end of last paragraph", value:"inline"}], defaultValue:defaultEdit?.storyInsertionType??"new_paragraph", show:(d)=>d.add_type==="story" && ((d.page==="add" || !d.page) || (d.edit_id && d.page==="edit"))},
             add_autoContinue: {label:`Auto-continue? <i style="opacity:0.7;">After the text is inserted, should the AI be automatically triggered?</i>`, type:"select", options:[{content:"▶️ Yes, continue immediately", value:"yes"}, {content:"✋ No, just insert the text", value:"no"}], defaultValue:defaultEdit?.autoContinue??"yes", show:(d)=>!d.page || d.page==="add" || (d.edit_id && d.page==="edit")},
@@ -1230,6 +1234,7 @@ if(localStorage.seenTopStuffOnce) {
               label: d.add_label.trim() || id,
               type: d.add_type,
               insertionText: d.add_insertionText,
+              promptText: d.add_promptText,
               actionInsertionType: d.add_actionInsertionType,
               storyContinuationType: d.add_storyContinuationType,
               storyInsertionType: d.add_storyInsertionType,
@@ -1308,6 +1313,8 @@ if(localStorage.seenTopStuffOnce) {
             if(data.actionInsertionType === "prepend") whatHappensNextEl.value = whatHappensNextEl.value + insertionText;
             if(data.actionInsertionType === "replace_selection") replaceSelectionInTextarea(whatHappensNextEl, insertionText);
             localStorage.whatHappensNext = whatHappensNextEl.value;
+            let promptText = data.promptText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);
+            localStorage.shortcutId = data.id;
             
             if(data.autoContinue === "yes") continueStory();
           } else if(data.type === "story") {
@@ -1316,8 +1323,10 @@ if(localStorage.seenTopStuffOnce) {
             if(data.storyInsertionType === "new_paragraph") storySoFarEl.value = storySoFarEl.value.trim() + "\n\n" + insertionText;
             storySoFarEl.scrollTop = storySoFarEl.scrollHeight;
             localStorage.storySoFar = storySoFarEl.value;
+            let promptText = data.promptText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);        
+            localStorage.shortcutId = data.id;
             
-            if(data.autoContinue === "yes") continueStory({continueInline: data.storyContinuationType==="inline" });
+            if(data.autoContinue === "yes") continueStory({continueInline: data.storyContinuationType==="inline"});
           }
         }
         
@@ -1589,7 +1598,6 @@ if(localStorage.seenTopStuffOnce) {
     <button onclick="if(mediaSettingsBar.style.display === 'none') { mediaSettingsBar.style.display=''; this.textContent='🎵 Hide Music'; } else { mediaSettingsBar.style.display='none'; this.textContent='🎵 Show Music'; }">🎵 Show Music</button>
     <button onclick="if(genInfoCtn.style.display === 'none') { genInfoCtn.style.display=''; this.textContent='ℹ️ Hide Info'; } else { genInfoCtn.style.display='none'; this.textContent='ℹ️ Show Info'; }">ℹ️ Show Info</button>
     <button onclick="if(autoBackupsOuterEl.hidden === true) { autoBackupsOuterEl.hidden=false; this.textContent='🗄️ Hide Backups'; } else { autoBackupsOuterEl.hidden=true; this.textContent='🗄️ Show Backups'; }">🗄️ Show Backups</button>
-    <button onclick="if(commentsEl.style.display == 'none') { if(!commentsEl.innerHTML.trim()){initTabbedComments();}; commentsEl.style.display=''; this.textContent='Hide Comments'; } else { commentsEl.style.display='none'; this.textContent='💬 Show Comments'; }">💬 Show Comments</button>
     <button id="storySettingsBtn" onclick="openStorySettingsModal()"">⚙️ Settings</button>
   </div>
   <script>
@@ -2108,22 +2116,11 @@ setInterval(async () => {
       document.getElementById("changelogContent").innerHTML = marked.parse(md);
     });
 </script>
-
-<!-- COMMENTS STUFF -->
-<div id="commentsCtn">
-<p id="commentsEl" style="display:none;"></p>
-</div>
-<script>
-function initTabbedComments() {
-  commentsEl.innerHTML = "";
-  commentsEl.append(tabbedCommentsPlugin({channels:commentChannels, defaultChannelOptions:defaultCommentOptions}));
-}
-</script>
 <br><br><br>
 
 <!-- <!-- DARK MODE STUFF -->
 <div id="leftFooterStickyButtonsCtn" style="position:fixed; bottom:0.5rem; left:0.5rem; z-index:10;">
-<button id="darkModeBtn" style="cursor:pointer;" onclick="window.toggleManualDarkMode(); if(commentsEl.innerHTML.trim()){initTabbedComments()};"></button>
+<button id="darkModeBtn" style="cursor:pointer;" onclick="window.toggleManualDarkMode();"></button>
 </div>
 <script>
 function toggleManualDarkMode() {
@@ -2166,43 +2163,6 @@ if(localStorage.forceColorScheme !== undefined) {
 }
 </script>
 
-<!-- FEEDBACK STUFF -->
-<div id="feedbackOuterCtn" style="position:fixed; bottom:0.5rem; right:0.5rem; text-align:right; z-index:100;">
-<div id="feedbackCommentsCtn" hidden style="margin-bottom:0.25rem;"></div>
-<button id="feedbackCommentsBtn" onclick="if(feedbackCommentsCtn.hidden) { feedbackCommentsCtn.hidden=false; if(!feedbackCommentsCtn.innerHTML) { feedbackCommentsCtn.innerHTML=generateFeedbackCommentsHtml(); } this.innerHTML='❌ close'; } else {  feedbackCommentsCtn.hidden=true; setTimeout(() => { if(feedbackCommentsCtn.hidden) {feedbackCommentsCtn.innerHTML=''} }, 20000); /* delay, to allow time for feedback to send */  this.innerHTML='🗨️ Feedback'; }">🗨️ Feedback</button>
-</div>
-<script>
-// Change the below variable to `false` to disable debug info (e.g. browser version, device type, localStorage size limits, etc.) with feedback submissions.
-// See   perchance.org/bug-report-plugin   for more info.
-let enableBrowserDebugInfoWithFeedback = true;
-
-if(enableBrowserDebugInfoWithFeedback) bugReport.initAutoErrorCapture(); // <-- must be initialized at page load
-
-function generateFeedbackCommentsHtml() {
-  let options = {channel:"feedback", hideComments:location.hash.includes("#showfeedback") || localStorage.showFeedback ? false : true, height:location.hash.includes("#showfeedback") || localStorage.showFeedback ? 500 : 220, commentPlaceholderText: "Share some feedback about how I can improve this page. Do not share personal info, feedback comments are public.", submitButtonText: "Submit Feedback", hideSettingsButton:true, hideFullscreenButton:true};
-  
-  async function beforeSubmit({inputText}) {
-    if(!inputText.trim()) return null;
-    
-    let url = await bugReport.createTemporaryDebugInfoUrl({
-      customData: {
-        storySoFarLength: storySoFarEl.value.length,
-        timeSincePageLoad: Date.now()-window.pageLoadStartTime,
-        storySoFarElInitialRenderTime: window.storySoFarElInitialRenderTime,
-        storageEstimate: await navigator.storage.estimate(),
-      },
-      publicKey: "PUBLIC_1_VhWWC5YZSOvjJcKEPLEA6FfirbpAaSqNFkEFyuEk78CUdWGJyfSUt4HXL4fZZLZSCV8GVaSeZSsyVUiXLwd8PuFFcYMDLoig04JpvQAgvGGYZPJtDQ4aDdpTIUZSLBSkZZVFiCdqgnFk8xQWKq0dVkipUCQiZSO7beiEfEQ71PJ6AstsiolKwUBH8Cy28DmETkopYDe9y4QlohxXholANkpUdNLGgfctNAdebGw7O1CPABAhWFJRYlVpa4tEn2JUgcBywPUFQ7tEV1eRVqm7gJFMC0ItxvuwUYokiZSQpAbDN0WptNCWZP5CiG5owi0iqV0ncQ3sM1MgsKRadF3EqiHni0ceY9OoQ0wzhZSQ2tL6dCeZSxGW9Wt0AWirPlQvNzaqeJBZPVfe0R7SaNKdWm9OVFRKkJtIZS5WRlfDUUyTmdHGuFkBoZZalqrugNG62WSffMczMofsiaqeVxakUpW5XyFhRsPUATIdws7KeqgX8MZP6zAtZZ8BM6fkkg6ywT4oepCGAqwYY8iWJ1lGbdkBXrqN7y7iXQDRlAEFVmAgzaMK41oJQgcuZSB2MZPHZPGCHkeINZPVLwGpIDsyp8zuXDxA0w0YzmnSEWPRdIOVgGZPaGa4W5TSy01co9Oip2YLobLKYCrXt5Dca44UB0GowQMlqWZP2xVS7MS2ngZPyGmH1fpzNakwM5wEnJsTZPFsql6LN9aXPYhqrpYtw7bmEVTUqpDYVdOFUbepspmQJdgRFBDUb0UwZSZShB4kHCyZZigcZZ4Ae5HBIFNcYcLid6KeLe8whUyyVE7d8ukG8Y2Ed4FsYRxO8HbpzJiS6WBCyu9uPYga6OVSGB8M6SUuKaZZhlxNmpwrZZZShXF5ZZTxVOJvMouWDm9yvUBu0ygpZSfyAN5locFrSwtZShAD7eT7EYPcAEe8CQUmgF8ddUTTzhWzbmk5eBjDBHHZS1w2NTGRoVnGsfCwZPrCzLLCpFASyZZ4mAcWoGBpJXuDKMftslWRGCvZZKQFCCZZVYtvC8eJIWlZP97dus9GfKZSXOEKcZZFeeH3ZPkUbipiaPMEXZSIuzjUkeZPmM9uhxM1Cap3tf5iXBG3QU0Aiw2sK8NXYkrwiyQNxsGIA02ZSJ2K7hZZsJFVjmWQB3JjSrmHF0PFpWYXRRx4puQ7m2hlqSNPxEkGpaADR6d80Ahpartj9UZZ1DGxzKMex7sKZSCgehOfi64rcdTfDIEZPxMoJhXhlZZ5YFJcLXQjeHOwFQkUXTh2BxQf48O7VpagJlwEGBlYBkghVLShBElVHEU2p8RUcLQbX4YQNlBPzZZO8TRnBvuK8jKEIY4xsWadBUEPOZPWAJStNLDrOiRtedt3vNpUQKh4ZZOqNSXdAECgVtmTVBVuBAri0uEyjer39ZZH6WUXYYo5CKG9RfQrXhhfqeVyUIUK8XcUQjMpeotKQFGdyhsrD4aOFsEmqzrFf3BnWFYruIsY5Kx9ADpyZZdWFTzyMzyhpWaRJviBjx1IZSQFSf92A93bUU8Ka83hZZIE1WyKGwkgAlKD2qcNZZFhVkAY7DNqHCAIg6ZZARFgzQ5ecr1iCQ4mUY6EncnNrPRbn5m0jeXYX1pjIcSoTPNn69P7E8ZP8wk4RXw84ZE_PUBLIC_END",
-    });
-    return `${inputText}\n\nBrowser Debug Info:\n${url}`;
-  }
-  if(enableBrowserDebugInfoWithFeedback) options.beforeSubmit = beforeSubmit;
-  
-  if(localStorage.forceColorScheme) options.forceColorScheme = localStorage.forceColorScheme;
-  com = root.commentsPlugin(options);
-  return com;
-}
-</script>
-
 <script>
 // so bottom-sticky buttons don't clutter screen while typing:
 window.isTouchScreen = window.matchMedia("(pointer: coarse)").matches;
@@ -2220,7 +2180,6 @@ if(isTouchScreen) {
       keyboardIsProbablyShown = window.visualViewport.height < 0.8*maxSeenViewportHeight;
     }
     leftFooterStickyButtonsCtn.hidden = keyboardIsProbablyShown;
-    feedbackCommentsBtn.hidden = keyboardIsProbablyShown && feedbackCommentsCtn.hidden;
   });
 }
 </script>

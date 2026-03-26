@@ -9,8 +9,6 @@ codeDebug = true // change to true if you want to see code output in dev tools
 aiDebug = true // change to true if you want to see ai prompt output in dev tools
 
 ai = {import:ai-text-plugin} // <-- for generating the story text
-commentsPlugin = {import:comments-plugin} // <-- for feedback button
-tabbedCommentsPlugin = {import:tabbed-comments-plugin-v1} // <-- for comments section at bottom of page
 fullscreenButton = {import:fullscreen-button-plugin}
 literal = {import:literal-plugin} // <-- we use this to make it so curly brackets and square brackets in the story are interpreted as literal/plain brackets, and not Perchance special curly/square block characters
 upload = {import:upload-plugin} // <-- for the share link feature
@@ -18,7 +16,6 @@ kv = {import:kv-plugin} // <-- for story storage + auto-backups (indexeddb)
 combineEmojis = {import:combine-emojis-plugin} // simple helper for layering multiple emojis on top of one another
 prompt2 = {import:prompt2-plugin} // for "modal" popup, used for the shortcuts feature
 favicon = {import:favicon-plugin} // <-- for the icon in the browser tab
-bugReport = {import:bug-report-plugin} // for comments-plugin-based feedback button - it's a helper for getting browser debug info like browser version, localStorage size limits, etc. - stuff that's relevant to bug reports
 createTextEditor = {import:pftexteditor} // a higher-performance version of <textarea> that also supports text styling (e.g. text within asterisks can be italicized)
 icon = {import:fa-icon-plugin}
 generateImage = {import:text-to-image-plugin}
@@ -38,6 +35,7 @@ roll = {import:dice-plugin} // Added to assist in story progression
 startWithPrefix = [`# Direct Consequences of NEXT_ACTION ("1 paragraph"):`]
 storyPerspective = [document.getElementById('storyPerspectiveSelectEl').value || "second"]
 bibleOptionalPrompt = ""
+shortcutPromptText = ""
 
 // This is the task instruction that's appended to the story text when the player takes an action. You can edit it and then click the reload button to test your changes. And you can of course click save to create your own custom copy of this generator.
 consequencesOfActionTaskInstruction
@@ -251,6 +249,8 @@ sharedInstructionPrefix // stuff that we put before all tasks - i.e. general con
 getExtraSharedInstructionPrefixStuff() =>
   let lines = [];
   lines.push(toggleSendStoryInputCheckbox.checked && whatHappensNextEl.value.trim() !== "" ? `NEXT_ACTION (Use the following context to progress the story, performing the actions listed e.g; talking, texting, whispering, driving, etc): ${literal(whatHappensNextEl.value.replace(/\n/g, " "))}` : null);
+  console.log("shortcutPromptText : "+shortcutPromptText);
+  lines.push(shortcutPromptText.trim() !== "" ? shortcutPromptText : null);
   lines.push(!storyArcInstructionEl.hidden && storyArcInstructionEl.value.trim() !== "" ? `NEXT_KEY_EVENT (*naturally* guide the story towards this): ${literal(storyArcInstructionEl.value.replace(/\n/g, " "))}` : null);
   lines.push(toggleSendStoryInputCheckbox.checked && whatHappensNextEl.value.trim() !== "" ? `TASK: Above is the player's next action/speech/command in this adventure. You are the world's best Game Master - a masterful storyteller with a perfect sense for pacing, intrigue, and a knack for keeping players on the edge of their seat, and your task is to write the result of NEXT_ACTION (including NPC dialogue and story progression if relevant)` : null);
   lines = lines.filter(l => l); // filter out `null` lines
@@ -2098,8 +2098,23 @@ async continueStory(opts) =>
     welcomeModalEl.hidden = false;
     return;
   }
+  if(localStorage.shortcutId !== null) {
+    console.log("setting Shortcut Shit");
+    const promptText = localStorage.shortcutPromptText;
+    if (promptText && promptText.trim()) {
+      console.log("found prompttext: "+promptText);
+      shortcutPromptText = promptText.trim();
+      window.lastActionWithShortcut = true;
+      delete localStorage.shortcutId;
+      delete localStorage.shortcutPromptText;}
+    }
+    if(!opts.regen && !localStorage.shortcutShortcutId && window.lastActionWithShortcut) {
+      console.log("Removing Last Action Promptt");
+      shortcutPromptText = "";
+      window.lastActionWithShortcut = false;
+    }
   window.currentlyGenerating = true;
-
+  
   window.lastGenWasContinueInline = !!opts.continueInline;
 
   // Check if first story run
@@ -2424,7 +2439,7 @@ updateLastParagraphButtonsDisplayIfNeeded() =>
   let generateCount = Number(localStorage.generateCount); 
   if(generateCount > 2) {
     rateLastMessageCtn.style.display = "inline-block";
-    deleteLastBtn.innerHTML = `${icon("trash")}`;
+    deleteLastBtn.innerHTML = `${icon("trash","color:var(--danger)")}`;
     // deleteLastBtn.style.minWidth = "3rem";
     regenLastBtn.innerHTML = `${icon("arrows-rotate","color:var(--info);")}`;
     // regenLastBtn.style.minWidth = "3rem";

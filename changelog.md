@@ -1,3 +1,11 @@
+## 2026.03.26
+Features:
+- Added AI Prompt feild to shortcuts, this allows you to add data that wont be saved permanently to the story, but is loaded when the shortcut is used. useful for story mechanics to help AI remember what it's supposed to do.
+- UI fixes
+
+Removed:
+- Removed Feedback and Comments, Added note to message in the discord thread for support.
+
 ## 2026.03.25
 Features:
 - Added "new story" prompt to help show settings before starting new stories
