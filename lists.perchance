@@ -9,11 +9,9 @@ codeDebug = true // change to true if you want to see code output in dev tools
 aiDebug = true // change to true if you want to see ai prompt output in dev tools
 
 ai = {import:ai-text-plugin} // <-- for generating the story text
-fullscreenButton = {import:fullscreen-button-plugin}
 literal = {import:literal-plugin} // <-- we use this to make it so curly brackets and square brackets in the story are interpreted as literal/plain brackets, and not Perchance special curly/square block characters
 upload = {import:upload-plugin} // <-- for the share link feature
 kv = {import:kv-plugin} // <-- for story storage + auto-backups (indexeddb)
-combineEmojis = {import:combine-emojis-plugin} // simple helper for layering multiple emojis on top of one another
 prompt2 = {import:prompt2-plugin} // for "modal" popup, used for the shortcuts feature
 favicon = {import:favicon-plugin} // <-- for the icon in the browser tab
 createTextEditor = {import:pftexteditor} // a higher-performance version of <textarea> that also supports text styling (e.g. text within asterisks can be italicized)
@@ -404,7 +402,7 @@ generationEventHandlers
     }
     // Final Dash Sweep - This is intended to clean up shit em/en dashes.
     
-    if (!storyDashesCheckbox.checked && localStorage.emDashesComfirmation == "1") {
+    if (!storyDashesCheckbox.checked && localStorage.welcomeComplete == "1") {
       if (aiDebug) console.log("removing Dashes");
       storySoFarEl.value = storySoFarEl.value.replace(/([a-zA-Z])[—–]"([^\s])/g, '$1 "$2');
       storySoFarEl.value = storySoFarEl.value.replace(/([a-zA-Z])[—–]([a-zA-Z])/g, '$1, $2');
@@ -802,7 +800,7 @@ getCurrentStoryDataForStorage() =>
     storyGenreInput: storyGenreInputEl.value,
     storySubGenreInput: storySubGenreInputEl.value,
     storyArcInstruction: storyArcInstructionEl.value,
-    emDashesComfirmation: localStorage.emDashesComfirmation || "",
+    welcomeComplete: localStorage.welcomeComplete || "",
     shortcutButtons: JSON.parse(localStorage.shortcutButtons || "[]"),
     saveFileTimestamp: !!localStorage.saveFileTimestamp || "", 
     saveFileSuffix: localStorage.saveFileSuffix || "",
@@ -2945,7 +2943,7 @@ loadChatDataIntoInputAreas(data) =>
   localStorage.shortcutButtons = JSON.stringify(data.shortcutButtons || []);
   if (codeDebug) console.log("loadChatDataIntoInputAreas : shortcutButtons");
   if (codeDebug) console.log(localStorage.shortcutButtons);
-  localStorage.emDashesComfirmation = data.emDashesComfirmation || ""
+  localStorage.welcomeComplete = data.welcomeComplete || ""
   try { applyMediaSettingsFromStoryData(data); } catch(e) { console.error(e); }
   try { applyThemeSettingsFromStoryData(data); } catch(e) { console.error(e); }
   try { applyNotebookSettingsFromStoryData(data); } catch(e) { console.error(e); }
@@ -3285,7 +3283,7 @@ getCurrentStoryData() =>
     storySubGenreSelect: storySubGenreSelectEl.value,
     storyGenreInput: storyGenreInputEl.value,
     storySubGenreInput: storySubGenreInputEl.value,
-    emDashesComfirmation: localStorage.emDashesComfirmation,
+    welcomeComplete: localStorage.welcomeComplete,
     storyArcInstruction: storyArcInstructionEl.value,
     shortcutButtons: JSON.parse(localStorage.shortcutButtons || "[]"),
   };
