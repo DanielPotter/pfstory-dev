@@ -1,3 +1,10 @@
+## 2026.03.31
+Features:
+- Added "Erotica" Genre - By request
+
+Fix:
+- UI fixes, Typos.
+
 ## 2026.03.26
 Features:
 - Added AI Prompt feild to shortcuts, this allows you to add data that wont be saved permanently to the story, but is loaded when the shortcut is used. useful for story mechanics to help AI remember what it's supposed to do.

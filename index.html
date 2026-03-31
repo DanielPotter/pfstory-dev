@@ -153,6 +153,8 @@
     quoteItalic:false,
     advancedRules:[],
   };
+  populateGenres(document.getElementById("storyGenreSelectEl"));
+  populateGenres(document.getElementById("storySubGenreSelectEl"));
 </script>
 
 <script>window.pageLoadStartTime=Date.now();</script>
@@ -161,15 +163,13 @@
 [favicon("https://user-uploads.perchance.org/file/f913a068fa7f9271f4528cc5cd282ba5.png")]
 
 <div id="topStuffEl">
-<h1 style="margin-top:1rem; font-size:140%;">[pageTitle]</h1>
+<h1 style="margin-top:1rem; font-size:140%;">🔮 Purple's RPG Stories</h1>
 <p id="subtitleEl" style="font-size:85%; opacity:0.8; padding:0 0.5rem;">Start your adventure below by either entering what you want the story to be about, or select begin story to have it create one for you.</p>
 </div>
 <div id="shareIntroCtn" class="settingsModule" hidden style="width:100%; max-width:700px; box-sizing:border-box; margin:0.5rem auto 0; text-align:left; padding:0.4rem 0.6rem;"></div>
 <script>
-if(localStorage.seenTopStuffOnce) {
+if(localStorage.welcomeComplete) {
   topStuffEl.style.display = "none";
-} else {
-  localStorage.seenTopStuffOnce = "1";
 }
 </script>
 
@@ -621,33 +621,7 @@ if(localStorage.seenTopStuffOnce) {
         <div class="modalSectionTitle">Genre</div>
         <div class="modalRow themeInlineRow">
           <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storyGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyGenreSelect=this.value; storyGenreInputEl.hidden = (this.value !== 'custom'); storyCustomGenreCtn.hidden = !(this.value === 'custom' || storySubGenreSelectEl.value === 'custom');">
-              <option value="default" selected>Default (no change)</option>
-              <option value="adventure">Adventure</option>
-              <option value="comedy">Comedy</option>
-              <option value="contemporary">Contemporary</option>
-              <option value="custom">Custom</option>
-              <option value="cyberpunk">Cyberpunk</option>
-              <option value="dark_fantasy">Dark Fantasy</option>
-              <option value="dystopian">Dystopian</option>
-              <option value="fantasy">Fantasy</option>
-              <option value="historical_fiction">Historical Fiction</option>
-              <option value="horror">Horror</option>
-              <option value="magic_real">Magical Realism</option>
-              <option value="mystery">Mystery</option>
-              <option value="noir">Noir</option>
-              <option value="political">Political</option>
-              <option value="post_apocalyptic">Post-Apocalyptic</option>
-              <option value="romance">Romance</option>
-              <option value="sci_fi">Sci-Fi</option>
-              <option value="self_help">Self-Help</option>
-              <option value="slice_of_life">Slice of Life</option>
-              <option value="spy">Spy</option>
-              <option value="steampunk">Steampunk</option>
-              <option value="superhero">Superhero</option>
-              <option value="thriller">Thriller</option>
-              <option value="war">War</option>
-              <option value="western">Western</option>       
+            <select id="storyGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyGenreSelect=this.value; storyGenreInputEl.hidden = (this.value !== 'custom'); storyCustomGenreCtn.hidden = !(this.value === 'custom' || storySubGenreSelectEl.value === 'custom');">  
             </select>
           </div>
         </div>
@@ -657,32 +631,6 @@ if(localStorage.seenTopStuffOnce) {
         <div class="modalRow themeInlineRow">
           <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
             <select id="storySubGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storySubGenreSelect=this.value; storySubGenreInputEl.hidden = (this.value !== 'custom'); storyCustomGenreCtn.hidden = !(this.value === 'custom' || storyGenreSelectEl.value === 'custom');">
-              <option value="default" selected>None</option>
-              <option value="adventure">Adventure</option>
-              <option value="comedy">Comedy</option>
-              <option value="contemporary">Contemporary</option>
-              <option value="custom">Custom</option>
-              <option value="cyberpunk">Cyberpunk</option>
-              <option value="dark_fantasy">Dark Fantasy</option>
-              <option value="dystopian">Dystopian</option>
-              <option value="fantasy">Fantasy</option>
-              <option value="historical_fiction">Historical Fiction</option>
-              <option value="horror">Horror</option>
-              <option value="magic_real">Magical Realism</option>
-              <option value="mystery">Mystery</option>
-              <option value="noir">Noir</option>
-              <option value="political">Political</option>
-              <option value="post_apocalyptic">Post-Apocalyptic</option>
-              <option value="romance">Romance</option>
-              <option value="sci_fi">Sci-Fi</option>
-              <option value="self_help">Self-Help</option>
-              <option value="slice_of_life">Slice of Life</option>
-              <option value="spy">Spy</option>
-              <option value="steampunk">Steampunk</option>
-              <option value="superhero">Superhero</option>
-              <option value="thriller">Thriller</option>
-              <option value="war">War</option>
-              <option value="western">Western</option>  
             </select>
           </div>
         </div>
@@ -1313,7 +1261,7 @@ if(localStorage.seenTopStuffOnce) {
             if(data.actionInsertionType === "prepend") whatHappensNextEl.value = whatHappensNextEl.value + insertionText;
             if(data.actionInsertionType === "replace_selection") replaceSelectionInTextarea(whatHappensNextEl, insertionText);
             localStorage.whatHappensNext = whatHappensNextEl.value;
-            let promptText = data.promptText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);
+            localStorage.shortcutPromptText = data.promptText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);
             localStorage.shortcutId = data.id;
             
             if(data.autoContinue === "yes") continueStory();
@@ -1323,7 +1271,7 @@ if(localStorage.seenTopStuffOnce) {
             if(data.storyInsertionType === "new_paragraph") storySoFarEl.value = storySoFarEl.value.trim() + "\n\n" + insertionText;
             storySoFarEl.scrollTop = storySoFarEl.scrollHeight;
             localStorage.storySoFar = storySoFarEl.value;
-            let promptText = data.promptText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);        
+            localStorage.shortcutPromptText = data.promptText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);        
             localStorage.shortcutId = data.id;
             
             if(data.autoContinue === "yes") continueStory({continueInline: data.storyContinuationType==="inline"});
@@ -2024,7 +1972,7 @@ setInterval(async () => {
 </div>
 
 <!-- INFO STUFF -->
-<div id="genInfoCtn" style="display:none;">
+<div id="genInfoCtn">
   <div class="tabs">
     <!-- Radio inputs must precede labels + panels in DOM -->
     <input type="radio" name="tabs" id="tab-about" checked>

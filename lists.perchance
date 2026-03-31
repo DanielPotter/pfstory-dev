@@ -3,7 +3,6 @@ $meta // this is the stuff that appears in search engines, social media preview 
     mode = minimal
   title = 🔮 Purple's RPG Stories
   description = Custom RPG/Story Generator made by iyruk
-pageTitle = 🔮 Purple's RPG Stories
 
 codeDebug = true // change to true if you want to see code output in dev tools
 aiDebug = true // change to true if you want to see ai prompt output in dev tools
@@ -290,7 +289,7 @@ generationEventHandlers
         storyBeginBtn.hidden = true;
         storyBeginOptionsCtn.hidden = true;
         toggleOverviewVisibilityEl.hidden = false;
-        topStuffEl.hidden = true;
+        topStuffEl.style.display = localStorage.welcomeComplete ? "none" : "";
         updateStoryHeaderVisibility();
         genInfoCtn.style.display = 'none';
         toggleOverviewVisibilityEl.hidden = false;
@@ -309,7 +308,7 @@ generationEventHandlers
         storyBeginOptionsCtn.hidden = true;
         updateBackgroundVisual(false);
         toggleOverviewVisibilityEl.hidden = false;
-        // updateStoryHeaderVisibility();
+        updateStoryHeaderVisibility();
 
         if(textChunk.startsWith("\n") && storySoFarEl.value.endsWith("\n\n")) {
           if (aiDebug) console.log("generationEventHandlers : chunk new line?");
@@ -402,7 +401,7 @@ generationEventHandlers
     }
     // Final Dash Sweep - This is intended to clean up shit em/en dashes.
     
-    if (!storyDashesCheckbox.checked && localStorage.welcomeComplete == "1") {
+    if (!storyDashesCheckbox.checked && localStorage.welcomeComplete === "1") {
       if (aiDebug) console.log("removing Dashes");
       storySoFarEl.value = storySoFarEl.value.replace(/([a-zA-Z])[—–]"([^\s])/g, '$1 "$2');
       storySoFarEl.value = storySoFarEl.value.replace(/([a-zA-Z])[—–]([a-zA-Z])/g, '$1, $2');
@@ -683,6 +682,7 @@ normalizeStoryData(data) =>
     storyArcInstruction: (data.storyArcInstruction ?? ""),
     emDashesComfirmation: (data.emDashesComfirmation ?? ""),
     shortcutButtons: (data.shortcutButtons ?? ""),
+    welcomeComplete: data.welcomeComplete,
   };
 
 getParagraphLimitFromSelect() =>
@@ -800,7 +800,7 @@ getCurrentStoryDataForStorage() =>
     storyGenreInput: storyGenreInputEl.value,
     storySubGenreInput: storySubGenreInputEl.value,
     storyArcInstruction: storyArcInstructionEl.value,
-    welcomeComplete: localStorage.welcomeComplete || "",
+    welcomeComplete: localStorage.welcomeComplete,
     shortcutButtons: JSON.parse(localStorage.shortcutButtons || "[]"),
     saveFileTimestamp: !!localStorage.saveFileTimestamp || "", 
     saveFileSuffix: localStorage.saveFileSuffix || "",
@@ -2100,17 +2100,19 @@ async continueStory(opts) =>
     console.log("setting Shortcut Shit");
     const promptText = localStorage.shortcutPromptText;
     if (promptText && promptText.trim()) {
-      console.log("found prompttext: "+promptText);
+      console.log("found Shortcut promptext: "+promptText);
       shortcutPromptText = promptText.trim();
       window.lastActionWithShortcut = true;
       delete localStorage.shortcutId;
-      delete localStorage.shortcutPromptText;}
+      delete localStorage.shortcutPromptText;
     }
-    if(!opts.regen && !localStorage.shortcutShortcutId && window.lastActionWithShortcut) {
-      console.log("Removing Last Action Promptt");
-      shortcutPromptText = "";
-      window.lastActionWithShortcut = false;
-    }
+  }
+  if(!opts.regen && !localStorage.shortcutShortcutId && window.lastActionWithShortcut) {
+    console.log("Removing Last Action Shortcut Prompt");
+    shortcutPromptText = "";
+    window.lastActionWithShortcut = false;
+  }
+  
   window.currentlyGenerating = true;
   
   window.lastGenWasContinueInline = !!opts.continueInline;
@@ -2923,7 +2925,7 @@ loadChatDataIntoInputAreas(data) =>
   //   if(isValid) responseStyle = data.responseStyle;
   // }
   // responseStyleEl.value = responseStyle;  
-  storyWritingStyleSelectEl.value = data.storyWritingStyle || "default",
+  storyWritingStyleSelectEl.value = data.storyWritingStyle || "default";
   storyCustomWritingStyleCtn.hidden = data.storyWritingStyle !== "custom";
   storyWritingStyleResponseInputEl.value = data.storyWritingStyleResponseInput || "";
   storyWritingStyleCustomInputEl.value = data.storyWritingStyleCustomInput || "";
@@ -2931,19 +2933,17 @@ loadChatDataIntoInputAreas(data) =>
   difficultyModeEl.value = data.difficultyMode || "";
   storyGameModeSelectEl.value = data.gameMode || "";
   storyNamingConventionSelectEl.value = data.storyNamingConventionSelect || "";
-  storyWritingLengthEl.value = data.storyWritingLength || "1",
-  storyGenreSelectEl.value = data.storyGenreSelect || "default",
-  storySubGenreSelectEl.value = data.storySubGenreSelect || "default",
+  storyWritingLengthEl.value = data.storyWritingLength || "1";
+  storyGenreSelectEl.value = data.storyGenreSelect || "default";
+  storySubGenreSelectEl.value = data.storySubGenreSelect || "default";
   storyCustomGenreCtn.hidden = (data.storyGenreSelect !== "custom" && data.storySubGenreSelect !== "custom");
   storyGenreInputEl.hidden = data.storyGenreSelect !== "custom";
   storySubGenreInputEl.hidden = data.storySubGenreSelect !== "custom";
-  storyGenreInputEl.value = data.storyGenreInput || "",
-  storySubGenreInputEl.value = data.storySubGenreInput || "",
+  storyGenreInputEl.value = data.storyGenreInput || "";
+  storySubGenreInputEl.value = data.storySubGenreInput || "";
   setParagraphLimitSelectValue(data.paragraphLimit);
   localStorage.shortcutButtons = JSON.stringify(data.shortcutButtons || []);
-  if (codeDebug) console.log("loadChatDataIntoInputAreas : shortcutButtons");
-  if (codeDebug) console.log(localStorage.shortcutButtons);
-  localStorage.welcomeComplete = data.welcomeComplete || ""
+  localStorage.welcomeComplete = data.welcomeComplete || "";
   try { applyMediaSettingsFromStoryData(data); } catch(e) { console.error(e); }
   try { applyThemeSettingsFromStoryData(data); } catch(e) { console.error(e); }
   try { applyNotebookSettingsFromStoryData(data); } catch(e) { console.error(e); }
@@ -2951,6 +2951,8 @@ loadChatDataIntoInputAreas(data) =>
   window.loadingStoryInProgress = false;
 
   try { deleteWhatHappensNextBtn.hidden = !whatHappensNextEl.value.trim(); } catch(e) {}
+  
+  topStuffEl.style.display = localStorage.welcomeComplete ? "none" : "";
   
   if(storySoFarEl.value.trim() || Number(localStorage.generateCount||0) > 1) {
     storyBeginBtn.hidden = true;
@@ -4402,10 +4404,12 @@ async updateBackgroundVisual(userInitiated) =>
     let editorVisible = (typeof storyGenerationAreaEl !== "undefined" && !storyGenerationAreaEl.hidden);    
     if(codeDebug){console.log("updateBackgroundVisual : editorVisible : "+editorVisible)};
     if(editorVisible) {
+      if(codeDebug){console.log("updateBackgroundVisual : if")};
       topStuffEl.hidden = true;
       toggleOverviewVisibilityEl.hidden = false;
       storyOverviewEl.hidden = true;
     } else {
+      if(codeDebug){console.log("updateBackgroundVisual : else")};
       topStuffEl.hidden = false;
       toggleOverviewVisibilityEl.hidden = true;
       storyOverviewEl.hidden = false;
@@ -4764,7 +4768,7 @@ getThemeModalSnapshot() =>
     storyTextColor: themeTextColorEl.value || "",
     storyBackgroundColor: themeBackgroundColorEl.value || "",
     storyTextAuto: (typeof themeTextAutoEl !== "undefined" ? !!themeTextAutoEl.checked : false),
-    pageBackgroundAtuo: (typeof pageBackgroundAutoEl !== "undefined" ? !!pageBackgroundAutoEl.checked :false),
+    pageBackgroundAuto: (typeof pageBackgroundAutoEl !== "undefined" ? !!pageBackgroundAutoEl.checked :false),
     storyBackgroundAuto: (typeof themeBackgroundAutoEl !== "undefined" ? !!themeBackgroundAutoEl.checked : false),
     storyFontFamily: parseFontFamilyInput(themeFontFamilyEl.value || ""),
     userBackgroundColor: themeUserBgColorEl.value || "",
@@ -5871,6 +5875,46 @@ runObserver
   [setTimeout(() => initStoryObserver(), 1000)]
 
 // Writing Style & Genre Lists
+
+storyGenres() => 
+  return [
+    ["default", "None"],
+    ["custom", "Custom"],
+    ["adventure", "Adventure"],
+    ["comedy", "Comedy"],
+    ["contemporary", "Contemporary"],
+    ["cyberpunk", "Cyberpunk"],
+    ["dark_fantasy", "Dark Fantasy"],
+    ["dystopian", "Dystopian"],
+    ["erotica", "Erotica"],
+    ["fantasy", "Fantasy"],
+    ["historical_fiction", "Historical Fiction"],
+    ["horror", "Horror"],
+    ["magic_real", "Magical Realism"],
+    ["mystery", "Mystery"],
+    ["noir", "Noir"],
+    ["political", "Political"],
+    ["post_apocalyptic", "Post-Apocalyptic"],
+    ["romance", "Romance"],
+    ["sci_fi", "Sci-Fi"],
+    ["self_help", "Self-Help"],
+    ["slice_of_life", "Slice of Life"],
+    ["spy", "Spy"],
+    ["steampunk", "Steampunk"],
+    ["superhero", "Superhero"],
+    ["thriller", "Thriller"],
+    ["war", "War"],
+    ["western", "Western"]    
+  ];
+
+populateGenres(selectEl) =>
+  genres = storyGenres();
+  selectEl.innerHTML = genres
+    .map(([value, label]) =>
+      `<option value="${value}" ${value === "default" ? "selected" : ""}>${label}</option>`
+    )
+    .join("");
+
 genreInstructions
   default
   fantasy
@@ -5921,6 +5965,8 @@ genreInstructions
     - **Genre: Superhero.** Focus on characters with superhuman abilities who use them to fight crime or protect the world, and villains who use their powers for evil or personal gain, sometimes for understandable or relatable reasons. Explore themes of power, responsibility, and morality. The tone is often action-packed and dramatic.
   magic_real
     - **Magical Realism.** Weave in subtle, unexplained magical elements that exist naturally within an otherwise realistic world. Treat the extraordinary as ordinary—characters should accept strange phenomena without question. Focus on atmosphere, emotion, and quiet wonder rather than rules or systems. Avoid structured magic or traditional fantasy tropes.
+  erotica
+    - **Erotica.** Focus on intimate, emotionally charged connections between characters, emphasizing desire, tension, and sensory detail. Build atmosphere through subtle gestures, lingering looks, and internal thoughts, allowing attraction and chemistry to unfold naturally. Keep the tone evocative and immersive, prioritizing mood and character dynamics over explicit detail.
 
 styleInstructions
   default
