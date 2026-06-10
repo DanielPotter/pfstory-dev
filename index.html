@@ -222,7 +222,7 @@ if(localStorage.welcomeComplete) {
     <button id="storyBibleGenerateBtn" onclick="generateBibleSection()">✨ Auto-Generate</button>
     <button class="btn-icon" id="storyBibleDeleteBtn" onclick="{notepadEditorEl.value=''}; saveNotepadEditorToActiveTab(); storyBibleRegenBtn.hidden=true; storyBibleGenerateBtn.hidden=false;">[icon("trash","color:var(--danger);")]</button>
     <label style="font-size:0.75rem; line-height:1.2;"><input id="storyBibleAutoUpdateCheckBox" type="checkbox" oninput="let key = 'storyBibleAutoCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,''); localStorage[key] = this.checked ? '1' : '';"></br>Auto Update</label>
-    <label style="font-size:0.75rem; line-height:1.2;" hidden><input id="storyBibleCustomFormatCheckBox" type="checkbox" oninput="let key = 'storyBibleCustomFormatCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,''); localStorage[key] = this.checked ? '1' : '';"></br>Custom Format</label>
+    <label style="font-size:0.75rem; line-height:1.2;"><input id="storyBibleCustomFormatCheckBox" type="checkbox" oninput="let customTemplateKey = getBibleCustomTemplateEnabledKey(notepadTabsSelectEl.selectedOptions[0].text); localStorage[customTemplateKey] = this.checked ? '1' : ''; notepadBibleFormatCtn.hidden = !this.checked;"></br>Custom Template</label>
   </div>
   <div id="notepadBibleFormatCtn" hidden></div>
   <div id="notepadEditorCtn"></div>
@@ -2321,7 +2321,7 @@ else ai({preload:true});
   }
   
   /* Global Inputs & Textareas */
-  input, textarea, select, #notepadEditorEl {
+  input, textarea, select, #notepadEditorEl, #bibleCustomFormatEditorEl {
     font-family: var(--font-ui);
     font-size: 13px;
     color: var(--text);
@@ -3052,6 +3052,7 @@ else ai({preload:true});
   }
   #notepadBibleCtn {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
     gap: 1.0rem;

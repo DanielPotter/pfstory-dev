@@ -2690,11 +2690,14 @@ async autoUpdateBibleSection(options) =>
 
   window.generatingBibleSectionName = options.title;
   let buffer = "";
-  window.existingSectionContentForPrompt = tab.content.trim();
+  let bibleContent = splitBibleContent(tab.content);
+  window.bibleSectionTemplateForPrompt = bibleContent.template;
+  window.existingSectionContentForPrompt = bibleContent.mainContent.trim();
 
     if (!isRegeneration) {
       window.lastBibleGenerationData[options.title] = {
         newEvents: window.newEventsForPrompt,
+        template: window.bibleSectionTemplateForPrompt,
         existingContent: window.existingSectionContentForPrompt
       };
       
@@ -2729,6 +2732,8 @@ async autoUpdateBibleSection(options) =>
       if (codeDebug) console.log("autoUpdateBibleSection : ai : onFinish : data", data);
     },
   });
+
+  console.log("autoUpdateBibleSection : currentAutoBibleGeneration :", options.title, ":", window.currentAutoBibleGeneration[options.title]);
 
   let bibleData;
   let generatedContent = null;
@@ -2777,6 +2782,7 @@ async autoUpdateBibleSection(options) =>
     window.currentAutoBibleGeneration[options.title] = null;
     window.generatingBibleSectionName = null;
     window.newEventsForPrompt = null;
+    window.bibleSectionTemplateForPrompt = null;
     window.existingSectionContentForPrompt = null;
   }
   
@@ -2826,10 +2832,12 @@ async generateBibleSection(options) =>
   
   window.generatingBibleSectionName = bibleSection;
   let targetTextarea = window.notepadEditorEl;
+  window.bibleSectionTemplateForPrompt = window.bibleCustomFormatEditorEl?.value.trim();
   window.existingSectionContentForPrompt = window.notepadEditorEl.value.trim();
   if (!isRegeneration) {
     window.lastBibleGenerationData[bibleSection] = {
       newEvents: window.newEventsForPrompt,
+      template: window.bibleSectionTemplateForPrompt,
       existingContent: window.existingSectionContentForPrompt
     };
     
@@ -2863,6 +2871,8 @@ async generateBibleSection(options) =>
       }
     }
   });
+
+  console.log("generateBibleSection : currentBibleGeneration :", window.currentBibleGeneration);
     
   let bibleData;
   try {
@@ -3854,7 +3864,7 @@ ensureBibleCustomFormatEditor() =>
   bibleCustomFormatEditorEl.id = "bibleCustomFormatEditorEl";
   bibleCustomFormatEditorEl.class = "text";
   bibleCustomFormatEditorEl.placeholder = "A place to specify the format for this section.";
-  bibleCustomFormatEditorEl.style.cssText = "width:100%; height:0.25vh; min-height:0; max-height:0.5vh; display:block; resize:vertical;";
+  bibleCustomFormatEditorEl.style.cssText = "width:100%; height:25vh; min-height:0; max-height:50vh; display:block; resize:vertical;";
   notepadBibleFormatCtn.innerHTML = "";
   notepadBibleFormatCtn.appendChild(bibleCustomFormatEditorEl);
   bibleCustomFormatEditorEl.addEventListener("input", function() {
@@ -3887,6 +3897,25 @@ ensureNotepadEditor() =>
   });
   return notepadEditorEl;
 
+splitBibleContent(content) =>
+  const match = content.match(/(^|\n)#=====#(\n|$)/);
+  let template, mainContent = content.trim();
+  if (match) {
+    // The template is first to make this more compatible with the original pfstory generator.
+    template = content.slice(0, match.index).trim();
+    mainContent = content.slice(match.index + match[0].length).trim();
+  }
+  return {
+    template,
+    mainContent,
+  };
+
+joinBibleContent(template, mainContent) =>
+  if (template?.trim()) {
+    return `${template}\n\n#=====#\n\n${mainContent}`;
+  }
+  return mainContent;
+
 saveNotepadEditorToActiveTab() =>
   if (codeDebug) console.log("saveNotepadEditorToActiveTab");
   if(!window.notepadEditorEl) return;
@@ -3894,7 +3923,7 @@ saveNotepadEditorToActiveTab() =>
   let data = getNotebookDataForScope(scope);
   let active = data.tabs.find(t => t.id === data.activeTabId) || data.tabs[0];
   if(active) {
-    active.content = window.notepadEditorEl.value || "";
+    active.content = joinBibleContent(window.bibleCustomFormatEditorEl?.value, window.notepadEditorEl.value || "");
     active.lastEditedTime = Date.now();
   }
   // if (codeDebug) console.log("Scope: " + scope);
@@ -3923,6 +3952,14 @@ loadNotepadTabContent(tabId) =>
     // if (codeDebug) console.log("Tab title: " + tab.title);
     window.notepadLoadingContent = true;
 
+    storyBibleCheckboxKey = 'storyBibleAutoCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,'');
+    if (codeDebug) console.log("loadNotepadTabContent : storyBibleCheckboxKey : " + storyBibleCheckboxKey);
+    storyBibleAutoUpdateCheckBox.checked = localStorage[storyBibleCheckboxKey] || "";
+
+    storyBibleCustomFormatCheckboxKey = getBibleCustomTemplateEnabledKey(notepadTabsSelectEl.selectedOptions[0].text);
+    if (codeDebug) console.log("loadNotepadTabContent : storyBibleCustomFormatCheckboxKey : " + storyBibleCustomFormatCheckboxKey);
+    storyBibleCustomFormatCheckBox.checked = localStorage[storyBibleCustomFormatCheckboxKey] || "";
+
     const storyBiblePlaceholders = [
       { title: "<Player Info>", placeholder: "Enter player info, stats, inventory, etc."},
       { title: "<Other Characters>", placeholder: "Describe other key characters, their motivations, relationships, etc."},
@@ -3937,13 +3974,11 @@ loadNotepadTabContent(tabId) =>
     let content = tab.content;
     if (match) {
       notepadEditorEl.placeholder = match.placeholder;
-      notepadBibleFormatCtn.hidden = false;
+      notepadBibleFormatCtn.hidden = !storyBibleCustomFormatCheckBox.checked;
       if (window.bibleCustomFormatEditorEl) {
-        const match = content.match(/(^|\n)#=====#(\n|$)/);
-        if (match) {
-          window.bibleCustomFormatEditorEl.value = content.slice(0, match.index).trim();
-          content = content.slice(match.index + match[0].length).trim();
-        }
+        const bibleContent = splitBibleContent(content);
+        window.bibleCustomFormatEditorEl.value = bibleContent.template || bibleSectionTemplate(match.title);
+        content = bibleContent.mainContent;
       }
     } else {
       notepadEditorEl.placeholder = "A place to add notes that won't affect the story.";
@@ -3953,14 +3988,6 @@ loadNotepadTabContent(tabId) =>
       }
     }
     window.notepadEditorEl.value = content || "";
-
-    storyBibleCheckboxKey = 'storyBibleAutoCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,'');
-    if (codeDebug) console.log("loadNotepadTabContent : storyBibleCheckboxKey : " + storyBibleCheckboxKey);
-    storyBibleAutoUpdateCheckBox.checked = localStorage[storyBibleCheckboxKey] || "";
-
-    storyBibleCustomFormatCheckboxKey = 'storyBibleCustomFormatCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,'');
-    if (codeDebug) console.log("loadNotepadTabContent : storyBibleCustomFormatCheckboxKey : " + storyBibleCustomFormatCheckboxKey);
-    storyBibleCustomFormatCheckBox.checked = localStorage[storyBibleCustomFormatCheckboxKey] || "";
 
     storyBibleRegenBtn.hidden = (window.notepadEditorEl.value.trim() === "");
     storyBibleUpdateBtn.hidden = (window.notepadEditorEl.value.trim() === "");
@@ -4001,7 +4028,7 @@ setActiveNotepadTab(tabId) =>
   // if (codeDebug) console.log(window.notepadEditorEl.value.trim());
   if(window.notepadEditorEl && !window.notepadLoadingContent) {
     let active = data.tabs.find(t => t.id === data.activeTabId) || data.tabs[0];
-    if(active) active.content = window.notepadEditorEl.value || "";
+    if(active) active.content = joinBibleContent(window.bibleCustomFormatEditorEl?.value, window.notepadEditorEl.value || "");
   }
   let nextTab = data.tabs.find(t => t.id === tabId);
   if(!nextTab) return;
@@ -4015,7 +4042,7 @@ setActiveNotepadTab(tabId) =>
   if (codeDebug) console.log("setActiveNotepadTab : storyBibleCheckboxKey : " + storyBibleCheckboxKey);
   storyBibleAutoUpdateCheckBox.value = localStorage[storyBibleCheckboxKey] || "";
   
-  storyBibleCustomFormatCheckboxKey = 'storyBibleCustomFormatCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,'');
+  storyBibleCustomFormatCheckboxKey = getBibleCustomTemplateEnabledKey(notepadTabsSelectEl.selectedOptions[0].text);
   if (codeDebug) console.log("setActiveNotepadTab : storyBibleCustomFormatCheckboxKey : " + storyBibleCustomFormatCheckboxKey);
   storyBibleCustomFormatCheckBox.value = localStorage[storyBibleCustomFormatCheckboxKey] || "";
 
@@ -4023,6 +4050,7 @@ setActiveNotepadTab(tabId) =>
   if(scope === "app") requestAppNotebookSaveDebounced({debounceMs:400});
   else requestSaveCurrentStory({debounceMs:400});
 
+// Note: This function appears to be obsolete as it is not referenced anywhere.
 setActiveNotepadTabByName(tabName) =>
   if (codeDebug) console.log("setActiveNotepadTabByName");
   let scope = getNotebookScope();
@@ -4031,7 +4059,7 @@ setActiveNotepadTabByName(tabName) =>
   // if (codeDebug) console.log(data);
   if(window.notepadEditorEl && !window.notepadLoadingContent) {
     let active = data.tabs.find(t => t.id === data.activeTabId) || data.tabs[0];
-    if(active) active.content = window.notepadEditorEl.value || "";
+    if(active) active.content = joinBibleContent(window.bibleCustomFormatEditorEl?.value, window.notepadEditorEl.value || "");
   }
   let nextTab = data.tabs.find(t => t.title === tabName);
   if(!nextTab) return false;
@@ -5815,14 +5843,13 @@ bibleAutoUpdatePrompt
   Do NOT restate the section label.
 
   $output = [this.joinItems("\n")]
-  
-bibleSectionFormat(section) =>
-  if (codeDebug) console.log("bibleSectionFormat");
-  let lines = [];
-  // <Player/World Info>
-  if (section === "<Player Info>") {
-    lines.push(
-      `# NAME:
+
+bibleSectionTemplate(section) =>
+  let template = "";
+  switch (section) {
+    // <Player/World Info>
+    case "<Player Info>":
+      template = `# NAME:
       ## AGE:
       ## HEIGHT:
       ## ORIENTATION: 
@@ -5836,68 +5863,74 @@ bibleSectionFormat(section) =>
       
       # DATE: (Weekday - Month Day, Year)
       # TIME: (Specific if possible, daypart)
-      # WEATHER:`
-    );
-  }
-  // <Other Characters>
-  if (section === "<Other Characters>") {
-    lines.push(
-  `# NAME:
-  ## STATUS: (Keep track of active or inactive characters without removing them)
-  ## AGE:
-  ## HEIGHT:
-  ## OCCUPATION:
-  ## BUST SIZE: (only if character is female)
-  ## PHYSICAL APPEARANCE: (do not include clothes, just the person itself)
-  ## BACKGROUND:
-  ## CLOTHES:
-  ## RELATIONSHIPS:`
-    );
-  }
-  // <Locations>
-  if (section === "<Locations>") {
-    lines.push(
-  `# NAME:
-  ## TYPE:
-  ## DESCRIPTION:
-  ## NOTABLE FEATURES:`
-    );
-  }
-  // <Events/Plot>
-  if (section === "<Events/Plot>") {
-    lines.push(
-      `# EVENT NAME:
+      # WEATHER:`;
+      break;
+    // <Other Characters>
+    case "<Other Characters>":
+      template = `# NAME:
+      ## STATUS: (Keep track of active or inactive characters without removing them)
+      ## AGE:
+      ## HEIGHT:
+      ## OCCUPATION:
+      ## BUST SIZE: (only if character is female)
+      ## PHYSICAL APPEARANCE: (do not include clothes, just the person itself)
+      ## BACKGROUND:
+      ## CLOTHES:
+      ## RELATIONSHIPS:`;
+      break;
+    // <Locations>
+    case "<Locations>":
+      template = `# NAME:
+      ## TYPE:
+      ## DESCRIPTION:
+      ## NOTABLE FEATURES:`;
+      break;
+    // <Events/Plot>
+    case "<Events/Plot>":
+      template = `# EVENT NAME:
       ## DESCRIPTION:
       ## CHARACTERS INVOLVED:
-      ## OUTCOME:`
-    );
-  }
-  // <Lore/History>
-  if (section === "<Lore/History>") {
-    lines.push(
-      `# FACTIONS:
-    ## FACTION NAME:
-    ### TYPE:
-    ### DESCRIPTION:
-    ### KEY MEMBERS:
-    ### GOALS:
-    
-    # LORE:
-    ## CONCEPT NAME:
-    ### DESCRIPTION:
-    ### ELEMENTS:
-    ### PURPOSE:`
-    );
-  }
-  // <Plot Threads>
-  if (section === "<Plot Threads>") {
-    lines.push(
-      `# THREAD NAME:
+      ## OUTCOME:`;
+      break;
+    // <Lore/History>
+    case "<Lore/History>":
+      template = `# FACTIONS:
+      ## FACTION NAME:
+      ### TYPE:
+      ### DESCRIPTION:
+      ### KEY MEMBERS:
+      ### GOALS:
+      
+      # LORE:
+      ## CONCEPT NAME:
+      ### DESCRIPTION:
+      ### ELEMENTS:
+      ### PURPOSE:`;
+      break;
+    // <Plot Threads>
+    case "<Plot Threads>":
+      template = `# THREAD NAME:
       ## DESCRIPTION:
       ## CLUES:
-      ## STATUS:`
-    );
+      ## STATUS:`;
+      break;
   }
+  return template.replaceAll(/^\s+/g);
+
+getBibleCustomTemplateEnabledKey(section) =>
+  return 'storyBibleCustomTemplateCheckbox_' + section.replace(/[<>\s\/]/g,'');
+
+bibleSectionFormat(section) =>
+  if (codeDebug) console.log("bibleSectionFormat");
+  let lines = [];
+
+  let sectionTemplate = "";
+  const isCustomTemplateEnabled = localStorage[getBibleCustomTemplateEnabledKey(section)];
+  if (isCustomTemplateEnabled) {
+    sectionTemplate = window.bibleSectionTemplateForPrompt;
+  }
+  sectionTemplate = sectionTemplate || bibleSectionTemplate(section);
+  lines.push(sectionTemplate);
   
   lines = lines.filter(l => l); // filter out `null` lines
   let text = lines.join("\n")
