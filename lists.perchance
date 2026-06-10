@@ -2721,7 +2721,7 @@ async autoUpdateBibleSection(options) =>
   window.currentAutoBibleGeneration[options.title] = ai({
     instruction: bibleAutoUpdatePrompt.evaluateItem,
     onStart: (data) => {
-      if (codeDebug) console.log("autoUpdateBibleSection : ai : onStart : data", data);
+      if (aiDebug) console.log("autoUpdateBibleSection : ai : onStart : data", data);
     },
     onChunk: (data) => {
       if (!data.isFromStartWith) {
@@ -2729,7 +2729,7 @@ async autoUpdateBibleSection(options) =>
       }
     },
     onFinish: (data) => {
-      if (codeDebug) console.log("autoUpdateBibleSection : ai : onFinish : data", data);
+      if (aiDebug) console.log("autoUpdateBibleSection : ai : onFinish : data", data);
     },
   });
 
@@ -2865,11 +2865,17 @@ async generateBibleSection(options) =>
   window.currentBibleGeneration = ai({
     instruction: bibleAutoUpdatePrompt.evaluateItem,
     // startWith: window.existingSectionContentForPrompt,
+    onStart: (data) => {
+      if (aiDebug) console.log("generateBibleSection : ai : onStart : data", data);
+    },
     onChunk: (data) => {
       if (!data.isFromStartWith) {
         targetTextarea.value += data.textChunk;
       }
-    }
+    },
+    onFinish: (data) => {
+      if (aiDebug) console.log("generateBibleSection : ai : onFinish : data", data);
+    },
   });
 
   console.log("generateBibleSection : currentBibleGeneration :", window.currentBibleGeneration);
