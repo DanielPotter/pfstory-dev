@@ -1,4 +1,4 @@
-## 2026.06.10
+## 2026.06.10 (DanielPotter)
 Features:
 - Added an undo button to reverse a manual bible section update.
 
@@ -6,11 +6,11 @@ Enhancements:
 - An ellipsis will now be inserted for removed dashes in dialog.
 - Lines with a colon will no longer be bold unless it is followed by a space or a new line. This will prevent times from being partially bold.
 
-## 2026.06.03
+## 2026.06.03 (DanielPotter)
 Fix:
 - Bible section templates being included in the AI context.
 
-## 2026.06.01
+## 2026.06.01 (DanielPotter)
 Features:
 - Added an option to customize the templates used to generate bible sections.
 - Added a button to update the current bible section using events since the last update.
@@ -20,6 +20,7 @@ Features:
 
 Fix:
 - Improved story continuation so that it wont output # Ambient Outro immediately.
+- Regenerating story after continuing the story inline now adds the newly generated story to the end of the last paragraph as expected.
 
 ## 2026.03.31
 Features:

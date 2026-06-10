@@ -354,7 +354,8 @@ generationEventHandlers
         window.currentGenerationTextRaw += rawChunk;
         window.currentGenerationCharCount += rawChunk.length;
       }
-      
+
+      // TODO: Figure out another way to implement the paragraph limit to allow for live-editing.
         if(!window.currentGenerationStopTriggered && window.currentGenerationParagraphLimit !== -1 && window.currentGenerationCharCount >= 100 && window.continueMode !== "inline") {
           if (aiDebug) console.log("generationEventHandlers : Paragraph limit");
           let stopIndex = getParagraphStopIndex(window.currentGenerationTextRaw, window.currentGenerationParagraphLimit);
@@ -2064,7 +2065,7 @@ getPreprocessedStoryText() =>
   // === REMOVE BIBLE MARKERS ===
   if (Array.isArray(bibleData)) {
     bibleData.forEach(section => {
-      const markerRegex = new RegExp(`(^|\\n+)${section.marker}\\n*`);
+      const markerRegex = new RegExp(`(^|\\n+)${section.marker}\\n*`, "g");
       resultText = resultText.replace(markerRegex, "\n\n");
     });
   }
