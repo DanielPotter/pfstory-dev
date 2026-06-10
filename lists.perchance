@@ -3858,7 +3858,7 @@ setNotebookDataForScope(scope, data) =>
 getPerchanceTreesFromAllNotebookData() =>
   const tabs = [
     ...getNotebookDataForScope("story").tabs,
-    //...getNotebookDataForScope("app").tabs,
+    ...getNotebookDataForScope("app").tabs,
   ];
   const trees = [];
   for (const tab of tabs) {
