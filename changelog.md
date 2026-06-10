@@ -2,6 +2,7 @@
 Features:
 - Added an option to customize the templates used to generate bible sections.
 - Added a button to update the current bible section using events since the last update.
+- Added a button to regenerate the name of the current story.
 
 Fix:
 - Improved story continuation so that it wont output # Ambient Outro immediately.

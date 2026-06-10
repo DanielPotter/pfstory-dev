@@ -1650,6 +1650,7 @@ renderStoryMenu(anchorEl) =>
     html = `
       ${ctx.type === "storyHeader" ? `<button data-action="new-story">➕ new story</button>` : ""}
       <button data-action="rename-story" data-id="${escapeHtml(ctx.id)}">🏷️ rename</button>
+      ${ctx.id === window.storyManager.currentId ? `<button data-action="auto-name-story" data-id="${escapeHtml(ctx.id)}">🏷️ auto rename</button>` : ""}
       <button data-action="duplicate-story" data-id="${escapeHtml(ctx.id)}">⿻ duplicate</button>
       <button data-action="download-story" data-id="${escapeHtml(ctx.id)}">💾 download</button>
       <button data-action="share-story" data-id="${escapeHtml(ctx.id)}">🔗 share</button>
@@ -1762,19 +1763,19 @@ scheduleAutoNameCheck() =>
     autoNameCurrentStoryIfNeeded();
   }, 1200);
 
-async autoNameCurrentStoryIfNeeded() =>
+async autoNameCurrentStoryIfNeeded(force) =>
   try {
     ensureStoryManager();
     let entry = getMetaEntryById(window.storyManager.currentId);
     if(!entry) return;
-    if(!isUntitledTitle(entry.title)) return;
-    if(entry.autoNameAttempted) return;
+    if(!force && !isUntitledTitle(entry.title)) return;
+    if(!force && entry.autoNameAttempted) return;
     let storyText = storySoFarEl?.value || "";
     if(storyText.length < 3000) return;
     entry.autoNameAttempted = true;
     requestMetaSaveDebounced({debounceMs:200});
     let overview = (storyOverviewEl?.value || "").trim();
-    let snippet = storyText.slice(0, 3000);
+    let snippet = force ? storyText.slice(-4000) : storyText.slice(0, 3000);
     let instruction = [
       "Choose a short, memorable story name (max 6 words).",
       "Start your response with \"Story Name:\" and do not add any other text.",

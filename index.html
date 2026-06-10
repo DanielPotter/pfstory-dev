@@ -761,6 +761,7 @@ if(localStorage.welcomeComplete) {
       let folderPath = btn.dataset.folder || "";
       if(action === "new-story") createNewStory();
       else if(action === "rename-story") renameStory(id);
+      else if(action === "auto-name-story" && id === window.storyManager.currentId) autoNameCurrentStoryIfNeeded(true);
       else if(action === "duplicate-story") duplicateStory(id);
       else if(action === "delete-story") deleteStory(id);
       else if(action === "download-story") downloadStory(id);
