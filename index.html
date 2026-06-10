@@ -748,6 +748,20 @@ if(localStorage.welcomeComplete) {
         <div  style="text-align:left; font-size:80%;">Example: StoryName.pfstory.json</div>
       </div>
     </div>
+    <!--Additional options for the forked version-->
+    <div class="modalRow modalSectionRow" hidden>
+      <div class="modalSection modalSectionHalf"> <!--Smarter Bible Updates-->
+        <div class="modalSectionTitle">Smarter Bible Auto-Updates</div>
+          <div class="modalRow themeInlineRow">
+          <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
+            <label><input id="bulkBibleAutoUpdatesEl" oninput="localStorage.bulkBibleAutoUpdates=this.checked ? '1' : '';" type="checkbox">Bulk Updates</label>
+          </div>
+        </div>
+        <div  style="text-align:left; font-size:80%;">Delays auto-updating bible sections until there is more to scan</div>
+      </div>
+      <div class="modalSection modalSectionHalf"> <!--Empty for now-->
+      </div>
+    </div>
   </div></div>
 
 <script>

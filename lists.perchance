@@ -3005,6 +3005,9 @@ loadChatDataIntoInputAreas(data) =>
     window.storySoFarElInitialRenderTime = performance.now()-t;
     if (codeDebug) console.log("storySoFarElInitialRenderTime:", window.storySoFarElInitialRenderTime);
   }
+
+  // Options added for the forked version:
+  //bulkBibleAutoUpdatesEl.checked = localStorage.bulkBibleAutoUpdates || "";
   
   currentTrackedInfoEl.value = data.currentTrackedInfo || "";
   infoTrackingBtn.dataset.enabled = data.infoTrackingEnabled || "";
