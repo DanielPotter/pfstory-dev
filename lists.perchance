@@ -3941,7 +3941,16 @@ saveNotepadEditorToActiveTab() =>
   let data = getNotebookDataForScope(scope);
   let active = data.tabs.find(t => t.id === data.activeTabId) || data.tabs[0];
   if(active) {
-    active.content = joinBibleContent(window.bibleCustomFormatEditorEl?.value, window.notepadEditorEl.value || "");
+    if (scope === "bible") {
+      let currentTemplate = window.bibleCustomFormatEditorEl?.value;
+      const defaultTemplate = bibleSectionTemplate(active.title);
+      if (currentTemplate.trim() === defaultTemplate.trim()) {
+        currentTemplate = "";
+      }
+      active.content = joinBibleContent(currentTemplate, window.notepadEditorEl.value || "");
+    } else {
+      active.content = window.notepadEditorEl.value || "";
+    }
     active.lastEditedTime = Date.now();
   }
   // if (codeDebug) console.log("Scope: " + scope);
@@ -5688,12 +5697,12 @@ getCombinedStoryBibleText(prompt) =>
     
   // Extract content with optional chaining and defaults
   const sectionContents = [
-    sortedTabs[0]?.content?.trim() || "",
-    sortedTabs[1]?.content?.trim() || "",
-    sortedTabs[2]?.content?.trim() || "",
-    sortedTabs[3]?.content?.trim() || "",
-    sortedTabs[4]?.content?.trim() || "",
-    sortedTabs[5]?.content?.trim() || ""
+    splitBibleContent(sortedTabs[0]?.content?.trim() || "").mainContent,
+    splitBibleContent(sortedTabs[1]?.content?.trim() || "").mainContent,
+    splitBibleContent(sortedTabs[2]?.content?.trim() || "").mainContent,
+    splitBibleContent(sortedTabs[3]?.content?.trim() || "").mainContent,
+    splitBibleContent(sortedTabs[4]?.content?.trim() || "").mainContent,
+    splitBibleContent(sortedTabs[5]?.content?.trim() || "").mainContent,
   ];
 
    // If prompt=true, return array of objects with boolean + marker + data

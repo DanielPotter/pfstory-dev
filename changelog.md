@@ -1,3 +1,7 @@
+## 2026.06.03
+Fix:
+- Bible section templates being included in the AI context
+
 ## 2026.06.01
 Features:
 - Added an option to customize the templates used to generate bible sections.
