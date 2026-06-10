@@ -407,7 +407,7 @@ generationEventHandlers
       if (aiDebug) console.log("removing Dashes");
       storySoFarEl.value = storySoFarEl.value.replace(/([a-zA-Z])[—–]"([^\s])/g, '$1 "$2');
       storySoFarEl.value = storySoFarEl.value.replace(/([a-zA-Z])[—–]([a-zA-Z])/g, '$1, $2');
-      storySoFarEl.value = storySoFarEl.value.replace(/([a-zA-Z])[—–]" /g, '$1" ');
+      storySoFarEl.value = storySoFarEl.value.replace(/([a-zA-Z])[—–]" /g, '$1..." ');
       storySoFarEl.value = storySoFarEl.value.replace(/(["])[—–]([a-z])/g, '$1 $2');    
       storySoFarEl.value = storySoFarEl.value.replace(/(\*)[—–−-]([a-zA-Z])/g, '$1 $2');        
       storySoFarEl.value = storySoFarEl.value.replace(/([a-zA-Z])[—–−-](\*)/g, '$1 $2');      
@@ -5211,7 +5211,7 @@ getStoryTextStyleRules() =>
     {match: /["“][^"]+?["”]/g,    style: quoteStyle || "color:var(--text-style-rule-quote-color); font-style:italic;"}, // "Hello World"
     {match: /(^|\n)SUMMARY\^[0-9]+: /g, style: "font-weight:bold;"},
     {match: /^>\s?\S+:/g,           style: "font-weight:bold;"}, // : bold
-    {match: /^(?!>\s?)[^:]{1,30}?:/g, style: "font-weight:bold;"}, // : bold
+    {match: /^(?!>\s?)[^:]{1,30}?:(\s|$)/g, style: "font-weight:bold;"}, // : bold
     {match: /(^|\n)#+ [^\n]*/g,         style: "font-weight:bold;"},
     {match: /(^|\n)>[^\n]*/g,           style: userStyle || "color:light-dark(#7c3e00, #ffc86e); font-style:italic; background-color: #ffcc8026; border-left: 4px solid #FFCC80; padding-left: 8px;"}, // > User Input
     {match: /<[^>\n]+>/g, style: "color:DimGray ;"},

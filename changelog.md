@@ -1,6 +1,11 @@
+## 2026.06.10
+Enhancements:
+- An ellipsis will now be inserted for removed dashes in dialog.
+- Lines with a colon will no longer be bold unless it is followed by a space or a new line. This will prevent times from being partially bold.
+
 ## 2026.06.03
 Fix:
-- Bible section templates being included in the AI context
+- Bible section templates being included in the AI context.
 
 ## 2026.06.01
 Features:
