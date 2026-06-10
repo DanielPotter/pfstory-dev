@@ -217,15 +217,18 @@ if(localStorage.welcomeComplete) {
   <div id="notepadBibleCtn" hidden>
     <span id="storyBibleLoader" hidden>[icon("spinner spin-pulse")]</span>
     <button id="storyBibleStopBtn" hidden onclick="if(window.currentBibleGeneration) window.currentBibleGeneration.stop();">[icon("circle-stop","color:var(--danger);")] Stop</button>
-    <button id="storyBibleRegenBtn" onclick="regenerateBibleSection()">[icon("arrows-rotate","color:var(--info)")] Regenerate</button>
-    <button id="storyBibleUpdateBtn" onclick="generateBibleSection()">Update</button>
+    <button id="storyBibleUpdateBtn" onclick="generateBibleSection()">[icon("arrows-rotate","color:var(--info)")] Update</button>
     <button id="storyBibleGenerateBtn" onclick="generateBibleSection()">✨ Auto-Generate</button>
     <button class="btn-icon" id="storyBibleDeleteBtn" onclick="{notepadEditorEl.value=''}; saveNotepadEditorToActiveTab(); storyBibleRegenBtn.hidden=true; storyBibleGenerateBtn.hidden=false;">[icon("trash","color:var(--danger);")]</button>
     <label style="font-size:0.75rem; line-height:1.2;"><input id="storyBibleAutoUpdateCheckBox" type="checkbox" oninput="let key = 'storyBibleAutoCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,''); localStorage[key] = this.checked ? '1' : '';"></br>Auto Update</label>
-    <label style="font-size:0.75rem; line-height:1.2;"><input id="storyBibleCustomFormatCheckBox" type="checkbox" oninput="let customTemplateKey = getBibleCustomTemplateEnabledKey(notepadTabsSelectEl.selectedOptions[0].text); localStorage[customTemplateKey] = this.checked ? '1' : ''; notepadBibleFormatCtn.hidden = !this.checked;"></br>Custom Template</label>
+    <label style="font-size:0.75rem; line-height:1.2;"><input id="storyBibleTemplateCheckBox" type="checkbox" oninput="let customTemplateKey = getBibleCustomTemplateEnabledKey(notepadTabsSelectEl.selectedOptions[0].text); localStorage[customTemplateKey] = this.checked ? '1' : ''; notepadBibleTemplateCtn.hidden = !this.checked;"></br>Custom Template</label>
   </div>
-  <div id="notepadBibleFormatCtn" hidden></div>
+  <div id="notepadBibleTemplateCtn" hidden></div>
   <div id="notepadEditorCtn"></div>
+  <div id="notepadBibleFooterCtn" hidden>
+    <button id="storyBibleRegenBtn" onclick="regenerateBibleSection()">✨ Regenerate</button>
+    <button id="storyBibleUndoBtn" onclick="undoBibleSectionGeneration()">[icon("undo","color:var(--danger);")] Undo</button>
+  </div>
   <div id="notepadTabMenu" class="notepadTabMenu" hidden>
     <button onclick="renameActiveNotepadTab()">🏷️ rename page</button>
     <hr class="storyToolsDivider">
@@ -3062,7 +3065,7 @@ else ai({preload:true});
     flex: 1;
     min-width: 0;
   }
-  #notepadBibleCtn {
+  #notepadBibleCtn, #notepadBibleFooterCtn {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;

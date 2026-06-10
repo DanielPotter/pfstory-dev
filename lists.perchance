@@ -2039,7 +2039,7 @@ getPreprocessedStoryText() =>
         // If marker existed originally but got removed
         if (markerRegex.test(storySoFarText) && !messagesWithSummaryReplacements.includes(marker)) {
           let messages = storySoFarText.split(/\n{2,}/).map(m => m.trim());
-          let markerIndex = messages.findIndex(m => m === marker);
+          let markerIndex = messages.findLastIndex(m => m === marker);
           if (markerIndex !== -1) {
             let messagesAfterMarker = messages.slice(markerIndex + 1);
             for (let i = 0; i < messagesWithSummaryReplacements.length; i++) {
@@ -2170,7 +2170,7 @@ async continueStory(opts) =>
       }
   
       // 2. Check if the marker already exists
-      const markerIndex = paragraphs.findIndex(p => p.includes(entry.marker));
+      const markerIndex = paragraphs.findLastIndex(p => p.includes(entry.marker));
   
       if (markerIndex === -1) {
         // Marker doesn't exist: Add it at targetIndex
@@ -2626,6 +2626,34 @@ async rateLastMessage(rating) =>
 
 // Story Bible / Info Tracker
 
+getBibleMarker(section) =>
+  const bibleSectionMarkers = {
+    "<Player Info>": "<update_marker_player>",
+    "<Other Characters>": "<update_marker_characters>",
+    "<Locations>": "<update_marker_locations>",
+    "<Events/Plot>": "<update_marker_events>",
+    "<Lore/History>": "<update_marker_lore>",
+    "<Plot Threads>": "<update_marker_mysteries>"
+  };
+  return bibleSectionMarkers[section];
+
+undoBibleSectionGeneration() =>
+  let bibleSection = window.notepadTabsSelectEl.selectedOptions[0].innerText;
+  const lastData = window.lastBibleGenerationData && window.lastBibleGenerationData[bibleSection];
+  if (lastData) {
+    window.notepadEditorEl.value = lastData.existingContent;
+
+    // Remove the last marker.
+    const bibleMarker = getBibleMarker(bibleSection);
+    if (bibleMarker) {
+      const markerPattern = `\\n*\\s*${bibleMarker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\n*`;
+      storySoFarEl.value = storySoFarEl.value.replace(new RegExp(markerPattern + '(?![\\s\\S]*' + markerPattern + ')'), "\n\n").trim();
+      localStorage.storySoFar = storySoFarEl.value;
+      notepadBibleFooterCtn.hidden = true;
+      window.lastBibleGenerationData[bibleSection] = null;
+    }
+  }
+
 regenerateBibleSection() =>
   let bibleSection = window.notepadTabsSelectEl.selectedOptions[0].innerText;
   const lastData = window.lastBibleGenerationData && window.lastBibleGenerationData[bibleSection];
@@ -2805,21 +2833,13 @@ async generateBibleSection(options) =>
     "<Lore/History>",
     "<Plot Threads>",
   ];
-  const bibleSectionMarkers = {
-    "<Player Info>": "<update_marker_player>",
-    "<Other Characters>": "<update_marker_characters>",
-    "<Locations>": "<update_marker_locations>",
-    "<Events/Plot>": "<update_marker_events>",
-    "<Lore/History>": "<update_marker_lore>",
-    "<Plot Threads>": "<update_marker_mysteries>"
-  };
   if (!storyBible.includes(bibleSection)) return;
   if (codeDebug) console.log("generateBibleSection : bibleSection : " + bibleSection);
 
   const { isRegeneration, previousNewEvents } = options;
   
   let storyText = storySoFarEl.value;
-  let bibleMarker = bibleSectionMarkers[bibleSection];
+  let bibleMarker = getBibleMarker(bibleSection);
   if (codeDebug) console.log("generateBibleSection : bibleMarker : " + bibleMarker);
 
   if (isRegeneration && previousNewEvents !== undefined) {
@@ -2837,13 +2857,10 @@ async generateBibleSection(options) =>
   if (!isRegeneration) {
     window.lastBibleGenerationData[bibleSection] = {
       newEvents: window.newEventsForPrompt,
-      template: window.bibleSectionTemplateForPrompt,
       existingContent: window.existingSectionContentForPrompt
     };
-    
-    let cleanedStoryText = storySoFarEl.value.replace(new RegExp(`\\n*\\s*${bibleMarker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\n*`, 'g'), "\n\n").trim();
-    if (codeDebug) console.log("generateBibleSection : cleanedStoryText : " + cleanedStoryText);
-    storySoFarEl.value = (cleanedStoryText ? cleanedStoryText + "\n\n" : "") + bibleMarker;
+
+    storySoFarEl.value += (storySoFarEl.value ? "\n\n" : "") + bibleMarker;
     localStorage.storySoFar = storySoFarEl.value;
   }
 
@@ -2856,6 +2873,7 @@ async generateBibleSection(options) =>
   closeNotepadBtn.disabled = true;
   notepadScopeSelectEl.disabled = true;
   notepadTabsSelectEl.disabled = true;
+  notepadBibleFooterCtn.hidden = true;
 
   let originalText = targetTextarea.value;
   let originalPlaceholder = targetTextarea.placeholder;
@@ -2881,6 +2899,7 @@ async generateBibleSection(options) =>
   console.log("generateBibleSection : currentBibleGeneration :", window.currentBibleGeneration);
     
   let bibleData;
+  let keepNewMarker = true;
   try {
     
     window.generatingBibleSection[bibleSection] = true;
@@ -2891,6 +2910,7 @@ async generateBibleSection(options) =>
     if (bibleData.stopReason === 'error' || bibleData.stopReason === 'user') {
       targetTextarea.placeholder = originalPlaceholder;
       targetTextarea.value = originalText;
+      keepNewMarker = false;
     } else {
       let finalValue = targetTextarea.value.trim();
       targetTextarea.value = finalValue;
@@ -2901,6 +2921,7 @@ async generateBibleSection(options) =>
     console.error("AI call failed:", e);
     targetTextarea.value = originalText;
     targetTextarea.placeholder = originalPlaceholder;
+    keepNewMarker = false;
   } finally {
     targetTextarea.placeholder = originalPlaceholder;
     if (bibleData && bibleData.stopReason !== 'error' && bibleData.stopReason !== 'user') {
@@ -2913,6 +2934,25 @@ async generateBibleSection(options) =>
         requestSaveCurrentStory({debounceMs: 400});
       }
     }
+
+    const markerPattern = `\\n*\\s*${bibleMarker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\n*`;
+    if (keepNewMarker) {
+      // This code would remove all bible markers:
+      // storySoFarEl.value.replace(new RegExp(`\\n*\\s*${bibleMarker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\n*`, 'g'), "\n\n").trim();
+      // We want to remove all instances of bibleMarker except for the last one.
+      //storySoFarEl.value = storySoFarEl.value.replace(new RegExp(`${markerPattern}(?=[\\s\\S]*${markerPattern})`, "g"), "\n\n").trim();
+
+      // TODO: Figure out how to do this without breaking undo.
+      // Remove the previous update marker, but only if there are no messages after it.
+      //storySoFarEl.value = storySoFarEl.value.replace(new RegExp(`${markerPattern}(?=(\\n*\\s*<update_marker_\\w+>\\s*\\n*)*?${markerPattern})`, "g"), "\n\n").trim();
+
+      notepadBibleFooterCtn.hidden = false;
+    } else {
+      // Remove only the last marker that we added to mark this generation.
+      storySoFarEl.value = storySoFarEl.value.replace(new RegExp(markerPattern + '(?![\\s\\S]*' + markerPattern + ')'), "\n\n").trim();
+    }
+    localStorage.storySoFar = storySoFarEl.value;
+
     storyBibleRegenBtn.hidden = (window.notepadEditorEl.value.trim() === "");
     storyBibleRegenBtn.disabled = false;
     storyBibleUpdateBtn.hidden = (window.notepadEditorEl.value.trim() === "");
@@ -3881,7 +3921,7 @@ getPerchanceTreesFromAllNotebookData() =>
 
 ensureBibleCustomFormatEditor() =>
   if(window.bibleCustomFormatEditorEl) return window.bibleCustomFormatEditorEl;
-  if(typeof notepadBibleFormatCtn === "undefined") return null;
+  if(typeof notepadBibleTemplateCtn === "undefined") return null;
   window.bibleCustomFormatEditorEl = createTextEditor({
     textStyleRules: getStoryTextStyleRules(),
   });
@@ -3889,8 +3929,8 @@ ensureBibleCustomFormatEditor() =>
   bibleCustomFormatEditorEl.class = "text";
   bibleCustomFormatEditorEl.placeholder = "A place to specify the format for this section.";
   bibleCustomFormatEditorEl.style.cssText = "width:100%; height:25vh; min-height:0; max-height:50vh; display:block; resize:vertical;";
-  notepadBibleFormatCtn.innerHTML = "";
-  notepadBibleFormatCtn.appendChild(bibleCustomFormatEditorEl);
+  notepadBibleTemplateCtn.innerHTML = "";
+  notepadBibleTemplateCtn.appendChild(bibleCustomFormatEditorEl);
   bibleCustomFormatEditorEl.addEventListener("input", function() {
     if(window.notepadLoadingContent) return;
     clearTimeout(window.notepadSaveDebounceTimeout);
@@ -3989,9 +4029,9 @@ loadNotepadTabContent(tabId) =>
     if (codeDebug) console.log("loadNotepadTabContent : storyBibleCheckboxKey : " + storyBibleCheckboxKey);
     storyBibleAutoUpdateCheckBox.checked = localStorage[storyBibleCheckboxKey] || "";
 
-    storyBibleCustomFormatCheckboxKey = getBibleCustomTemplateEnabledKey(notepadTabsSelectEl.selectedOptions[0].text);
-    if (codeDebug) console.log("loadNotepadTabContent : storyBibleCustomFormatCheckboxKey : " + storyBibleCustomFormatCheckboxKey);
-    storyBibleCustomFormatCheckBox.checked = localStorage[storyBibleCustomFormatCheckboxKey] || "";
+    storyBibleTemplateCheckboxKey = getBibleCustomTemplateEnabledKey(notepadTabsSelectEl.selectedOptions[0].text);
+    if (codeDebug) console.log("loadNotepadTabContent : storyBibleTemplateCheckboxKey : " + storyBibleTemplateCheckboxKey);
+    storyBibleTemplateCheckBox.checked = localStorage[storyBibleTemplateCheckboxKey] || "";
 
     const storyBiblePlaceholders = [
       { title: "<Player Info>", placeholder: "Enter player info, stats, inventory, etc."},
@@ -4007,7 +4047,7 @@ loadNotepadTabContent(tabId) =>
     let content = tab.content;
     if (match) {
       notepadEditorEl.placeholder = match.placeholder;
-      notepadBibleFormatCtn.hidden = !storyBibleCustomFormatCheckBox.checked;
+      notepadBibleTemplateCtn.hidden = !storyBibleTemplateCheckBox.checked;
       if (window.bibleCustomFormatEditorEl) {
         const bibleContent = splitBibleContent(content);
         window.bibleCustomFormatEditorEl.value = bibleContent.template || bibleSectionTemplate(match.title);
@@ -4015,7 +4055,7 @@ loadNotepadTabContent(tabId) =>
       }
     } else {
       notepadEditorEl.placeholder = "A place to add notes that won't affect the story.";
-      notepadBibleFormatCtn.hidden = true;
+      notepadBibleTemplateCtn.hidden = true;
       if (window.bibleCustomFormatEditorEl) {
         window.bibleCustomFormatEditorEl.value = "";
       }
@@ -4075,9 +4115,9 @@ setActiveNotepadTab(tabId) =>
   if (codeDebug) console.log("setActiveNotepadTab : storyBibleCheckboxKey : " + storyBibleCheckboxKey);
   storyBibleAutoUpdateCheckBox.value = localStorage[storyBibleCheckboxKey] || "";
   
-  storyBibleCustomFormatCheckboxKey = getBibleCustomTemplateEnabledKey(notepadTabsSelectEl.selectedOptions[0].text);
-  if (codeDebug) console.log("setActiveNotepadTab : storyBibleCustomFormatCheckboxKey : " + storyBibleCustomFormatCheckboxKey);
-  storyBibleCustomFormatCheckBox.value = localStorage[storyBibleCustomFormatCheckboxKey] || "";
+  storyBibleTemplateCheckboxKey = getBibleCustomTemplateEnabledKey(notepadTabsSelectEl.selectedOptions[0].text);
+  if (codeDebug) console.log("setActiveNotepadTab : storyBibleTemplateCheckboxKey : " + storyBibleTemplateCheckboxKey);
+  storyBibleTemplateCheckBox.value = localStorage[storyBibleTemplateCheckboxKey] || "";
 
   loadNotepadTabContent(nextTab.id);
   if(scope === "app") requestAppNotebookSaveDebounced({debounceMs:400});
@@ -4165,6 +4205,7 @@ setNotepadScope(scope) =>
     window.notepadTabsMenuBtn.hidden = false;
     window.notepadBibleCtn.hidden = true;
   }
+  window.notepadBibleFooterCtn.hidden = true;
   renderNotepadTabs();
 
 addNotepadTab(name) =>

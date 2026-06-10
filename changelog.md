@@ -1,4 +1,7 @@
 ## 2026.06.10
+Features:
+- Added an undo button to reverse a manual bible section update.
+
 Enhancements:
 - An ellipsis will now be inserted for removed dashes in dialog.
 - Lines with a colon will no longer be bold unless it is followed by a space or a new line. This will prevent times from being partially bold.
