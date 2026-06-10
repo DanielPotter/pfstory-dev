@@ -3855,6 +3855,24 @@ setNotebookDataForScope(scope, data) =>
   else window.currentStoryNotebookData = normalized;
   return normalized;
 
+getPerchanceTreesFromAllNotebookData() =>
+  const tabs = [
+    ...getNotebookDataForScope("story").tabs,
+    //...getNotebookDataForScope("app").tabs,
+  ];
+  const trees = [];
+  for (const tab of tabs) {
+    const match = tab.content.match(/^##PerchanceCode##\n/);
+    if (match) {
+      try {
+        trees.push(createPerchanceTree(tab.content.slice(match[0].length)));
+      } catch (e) {
+        console.error(`Failed to create Perchance tree for tab: ${tab.title}`, e);
+      }
+    }
+  }
+  return trees;
+
 ensureBibleCustomFormatEditor() =>
   if(window.bibleCustomFormatEditorEl) return window.bibleCustomFormatEditorEl;
   if(typeof notepadBibleFormatCtn === "undefined") return null;

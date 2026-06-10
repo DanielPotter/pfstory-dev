@@ -1258,28 +1258,39 @@ if(localStorage.welcomeComplete) {
         }
         
         function executeShortcutButton(data) {
+          // TODO: Consider caching trees.
+          const perchanceTrees = getPerchanceTreesFromAllNotebookData();
           if(data.type === "action") {
-            let insertionText = data.insertionText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);
+            let insertionText = evaluateShortcutText(data.insertionText, perchanceTrees);
             if(data.actionInsertionType === "replace") whatHappensNextEl.value = insertionText;
             if(data.actionInsertionType === "append") whatHappensNextEl.value += insertionText;
             if(data.actionInsertionType === "prepend") whatHappensNextEl.value = whatHappensNextEl.value + insertionText;
             if(data.actionInsertionType === "replace_selection") replaceSelectionInTextarea(whatHappensNextEl, insertionText);
             localStorage.whatHappensNext = whatHappensNextEl.value;
-            localStorage.shortcutPromptText = data.promptText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);
+            localStorage.shortcutPromptText = evaluateShortcutText(data.promptText, perchanceTrees);
             localStorage.shortcutId = data.id;
             
             if(data.autoContinue === "yes") continueStory();
           } else if(data.type === "story") {
-            let insertionText = data.insertionText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);
+            let insertionText = evaluateShortcutText(data.insertionText, perchanceTrees);
             if(data.storyInsertionType === "inline") storySoFarEl.value = storySoFarEl.value.trim() + insertionText;
             if(data.storyInsertionType === "new_paragraph") storySoFarEl.value = storySoFarEl.value.trim() + "\n\n" + insertionText;
             storySoFarEl.scrollTop = storySoFarEl.scrollHeight;
             localStorage.storySoFar = storySoFarEl.value;
-            localStorage.shortcutPromptText = data.promptText.replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem);        
+            localStorage.shortcutPromptText = evaluateShortcutText(data.promptText, perchanceTrees);
             localStorage.shortcutId = data.id;
             
             if(data.autoContinue === "yes") continueStory({continueInline: data.storyContinuationType==="inline"});
           }
+        }
+
+        function evaluateShortcutText(text, perchanceTrees) {
+          return text
+            .replace(/\{[0-9]+-[0-9]+\}/g, m=>m.evaluateItem)
+            .replace(/\[(\w+)\]/g, (m, listName) => {
+              // Find the first tree that contains the specified list. If it isn't found, default to the matched text.
+              return perchanceTrees.find(tree => tree[listName])?.[listName] ?? m;
+            });
         }
         
         

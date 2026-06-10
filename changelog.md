@@ -3,6 +3,8 @@ Features:
 - Added an option to customize the templates used to generate bible sections.
 - Added a button to update the current bible section using events since the last update.
 - Added a button to regenerate the name of the current story.
+- Added Perchance list support for shortcuts to use.
+  - There is no UI for this yet. Just add `##PerchanceCode##` to the top of a notebook page and it will be evaluated like a Perchance list. You can then reference one of the lists in the insertion or prompt text of a shortcut.
 
 Fix:
 - Improved story continuation so that it wont output # Ambient Outro immediately.
