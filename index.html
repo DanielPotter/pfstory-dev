@@ -218,10 +218,13 @@ if(localStorage.welcomeComplete) {
     <span id="storyBibleLoader" hidden>[icon("spinner spin-pulse")]</span>
     <button id="storyBibleStopBtn" hidden onclick="if(window.currentBibleGeneration) window.currentBibleGeneration.stop();">[icon("circle-stop","color:var(--danger);")] Stop</button>
     <button id="storyBibleRegenBtn" onclick="regenerateBibleSection()">[icon("arrows-rotate","color:var(--info)")] Regenerate</button>
+    <button id="storyBibleUpdateBtn" onclick="generateBibleSection()">Update</button>
     <button id="storyBibleGenerateBtn" onclick="generateBibleSection()">✨ Auto-Generate</button>
     <button class="btn-icon" id="storyBibleDeleteBtn" onclick="{notepadEditorEl.value=''}; saveNotepadEditorToActiveTab(); storyBibleRegenBtn.hidden=true; storyBibleGenerateBtn.hidden=false;">[icon("trash","color:var(--danger);")]</button>
     <label style="font-size:0.75rem; line-height:1.2;"><input id="storyBibleAutoUpdateCheckBox" type="checkbox" oninput="let key = 'storyBibleAutoCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,''); localStorage[key] = this.checked ? '1' : '';"></br>Auto Update</label>
+    <label style="font-size:0.75rem; line-height:1.2;" hidden><input id="storyBibleCustomFormatCheckBox" type="checkbox" oninput="let key = 'storyBibleCustomFormatCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,''); localStorage[key] = this.checked ? '1' : '';"></br>Custom Format</label>
   </div>
+  <div id="notepadBibleFormatCtn" hidden></div>
   <div id="notepadEditorCtn"></div>
   <div id="notepadTabMenu" class="notepadTabMenu" hidden>
     <button onclick="renameActiveNotepadTab()">🏷️ rename page</button>

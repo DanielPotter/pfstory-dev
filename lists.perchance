@@ -29,18 +29,19 @@ roll = {import:dice-plugin} // Added to assist in story progression
 
 // Note: see `responseStyleEl` in the HTML panel for the editor's notes / writing style
 // shortWritingInstruction = [responseStyleEl.value.replace("@@@custom", storyWritingStyleResponseInputEl.value).trim()]
-startWithPrefix = [`# Direct Consequences of NEXT_ACTION ("1 paragraph"):`]
+// startWithPrefix = [`# Direct Consequences of NEXT_ACTION ("1 paragraph"):`]
 storyPerspective = [document.getElementById('storyPerspectiveSelectEl').value || "second"]
-bibleOptionalPrompt = ""
-shortcutPromptText = ""
+bibleOptionalPrompt = [""]
+shortcutPromptText = [""]
 
 // This is the task instruction that's appended to the story text when the player takes an action. You can edit it and then click the reload button to test your changes. And you can of course click save to create your own custom copy of this generator.
 consequencesOfActionTaskInstruction
   [getExtraInstructionsForConsequencesOfAction()]
   TASK: Above is the player's next action/speech/command in this adventure. You are the world's best Game Master - a masterful storyteller with a perfect sense for pacing, intrigue, and a knack for keeping players on the edge of their seat, and your task is to write the result of NEXT_ACTION (including NPC dialogue and story progression if relevant). When referring to the player, use a [storyPerspective] person perspective. The Game Master only simulates the world, not the player; your response should not invoke new player actions - only describe the consequences of the player's actions, and *gives life to them* to create an engaging story.
-  [""] // blank line
+  \s // blank line
   [getStoryPrefixData(window.continueMode)]
-  # Ambient Outro //(One or two non-repetitive details of outside environment, distant sounds, scents, tangential callbacks, etc.): // Note: we use "# Ambient Outro" as a stop sequence, so this "# Ambient Outro" line and the stuff below never gets written. This is a galaxy brain trick to prevent the AI from including anything other than consequences in the response. Otherwise it sometimes includes other stuff even in spite of instructions to the contrary.
+  When you're done with the direct consequences of the player's action, write `# Ambient Outro` followed by one or two non-repetitive details of outside environment, distant sounds, scents, tangential callbacks, etc.
+  // # Ambient Outro //(One or two non-repetitive details of outside environment, distant sounds, scents, tangential callbacks, etc.): // Note: we use "# Ambient Outro" as a stop sequence, so this "# Ambient Outro" line and the stuff below never gets written. This is a galaxy brain trick to prevent the AI from including anything other than consequences in the response. Otherwise it sometimes includes other stuff even in spite of instructions to the contrary.
   // (a short ambient environmental/outside outro to round off the above paragraph)
   $output = [this.joinItems("\n").trim()]
 
@@ -101,14 +102,15 @@ getStoryPrefixData(source) =>
     lines.push(`Do not use a local/learned writing style based on the 'STORY SO FAR', instead, follow this style: ${styleData}.`)
   }
 
+  lines.push('');
   if(style !== "custom") {
     if (source !== "inline" && source !== "inlineCompletionText") {
-      lines.push(`# Direct Consequences of NEXT_ACTION (${paragraphs} Paragraph(s) Maximum):`);
+      lines.push(`Now you must write the direct consequences of NEXT_ACTION (${paragraphs} Paragraph(s) Maximum).`);
     } else {
-      lines.push(`# Direct Consequences of NEXT_ACTION (1 paragraph):`);
+      lines.push(`Now you must write the direct consequences of NEXT_ACTION (1 paragraph).`);
     };
   } else {
-    lines.push(`# Direct Consequences of NEXT_ACTION (${storyWritingStyleResponseInputEl.value})):`)
+    lines.push(`Now you must write the direct consequences of NEXT_ACTION (${storyWritingStyleResponseInputEl.value})).`)
   }
 
   if (codeDebug) console.log("getStoryPrefixData:\n"+lines.join("\n").trim());
@@ -195,10 +197,10 @@ getExtraInstructionsForContinueWithoutTask() =>
 // This `sharedInstructionPrefix` is placed before the specific task instructions like `consequencesOfActionTaskInstruction` and `continueWithoutActionTaskInstruction`.
 sharedInstructionPrefix // stuff that we put before all tasks - i.e. general context/rules, overview, plus the adventure/story text so far.
   In this open-world adventure RPG, your task is to simulate the world around the player, and write the consequences of the player's actions. Follow the instruction specified by 'TASK:' at the bottom of this text.
-  [""]
+  \s
   # Rules:
   - Let the player carve their own path. DO NOT railroad them into a specific story. They can change their mind. DO NOT try to pull them back to a story arc that they're not interested in. This is an open-world adventure, so the player can do *any* action they want, and the story will fluidly and realistically adapt to the consequences of their actions.
-  [""]
+  \s
   # Tips:
   - Never repeat specific descriptive phrases (e.g., specific body parts, environmental sounds) in consecutive responses.
   - Keep posts clean of too much punctuation
@@ -232,12 +234,12 @@ sharedInstructionPrefix // stuff that we put before all tasks - i.e. general con
   // - Your job as a DM is to simulate the world *around* the player - i.e. the actions of the NPCs, the state of the world, etc. - you must never make decisions on behalf of the player. Only the *player* can decide what they will do/say/thing.
   // - Avoid repetition of previous information.
   // - Don't bore the player with excessive descriptions. This is a game, not a novel.
-  [""]
+  \s
   [storySoFarEl.value.trim().length < 700 ? `\n# Forbidden Words:\n- cacophony\n- symphony\n- verdant\n- tapestry/tapestries\n- testament\n- sentinel\n- cerulean\n- whisper/whispers/whispering/whispered\n- sun kissed the horizon\n- stark\n- reminder\n` : ""]
   [getCombinedStoryBibleText()]
   # Overall, here's what the adventure should be about[storySoFarEl.value.trim().length < 1000 ? " (lead into this slowly)" : ""]: // while the story is less than 1000 characters long, we tell the AI to lead into it slowly, so it doesn't try to immediately jump to important plot points that are specified in the overview
   OVERVIEW: [literal(storyOverviewEl.value.trim()) || "(Unsure, you decide.)"]
-  [""]
+  \s
   # STORY SO FAR[storyOverviewEl.value.trim() ? ` (previous player actions are prefixed with ">")` : ""]:
   [literal(window.processedStorySoFarText || "(Nothing yet.)")]
   [getExtraSharedInstructionPrefixStuff()]
@@ -247,7 +249,7 @@ getExtraSharedInstructionPrefixStuff() =>
   let lines = [];
   lines.push(toggleSendStoryInputCheckbox.checked && whatHappensNextEl.value.trim() !== "" ? `NEXT_ACTION (Use the following context to progress the story, performing the actions listed e.g; talking, texting, whispering, driving, etc): ${literal(whatHappensNextEl.value.replace(/\n/g, " "))}` : null);
   console.log("shortcutPromptText : "+shortcutPromptText);
-  lines.push(shortcutPromptText.trim() !== "" ? shortcutPromptText : null);
+  lines.push(shortcutPromptText ? literal(shortcutPromptText) : null);
   lines.push(!storyArcInstructionEl.hidden && storyArcInstructionEl.value.trim() !== "" ? `NEXT_KEY_EVENT (*naturally* guide the story towards this): ${literal(storyArcInstructionEl.value.replace(/\n/g, " "))}` : null);
   lines.push(toggleSendStoryInputCheckbox.checked && whatHappensNextEl.value.trim() !== "" ? `TASK: Above is the player's next action/speech/command in this adventure. You are the world's best Game Master - a masterful storyteller with a perfect sense for pacing, intrigue, and a knack for keeping players on the edge of their seat, and your task is to write the result of NEXT_ACTION (including NPC dialogue and story progression if relevant)` : null);
   lines = lines.filter(l => l); // filter out `null` lines
@@ -392,7 +394,7 @@ generationEventHandlers
       storySoFarEl.scrollTop = 99999999; // scroll down to bottom of text box as story streams in
     }
   onFinish(data) =>
-    if (aiDebug) console.log("onFinish");
+    if (aiDebug) console.log("onFinish", data);
     
     if(storySoFarEl.value.length < 10000 & /^\*?\*?paragraph 1\*?\*?:\s+?/i.test(storySoFarEl.value)) {
       // for some reason the ai sometimes adds this
@@ -2085,7 +2087,7 @@ regenerateLast() =>
     storySoFarEl.value=storySoFarEl.value.trim().split('\n\n').slice(0, -1).join('\n\n');
   };
   requestSaveCurrentStory({immediate:true}); 
-  return continueStory({regen:true});
+  return continueStory({regen:true, continueInline:window.lastGenWasContinueInline});
 
 async continueStory(opts) =>
   if(codeDebug) {console.log("Running Continue Story")};
@@ -2107,7 +2109,7 @@ async continueStory(opts) =>
       delete localStorage.shortcutPromptText;
     }
   }
-  if(!opts.regen && !localStorage.shortcutShortcutId && window.lastActionWithShortcut) {
+  else if(!opts.regen && !localStorage.shortcutShortcutId && window.lastActionWithShortcut) {
     console.log("Removing Last Action Shortcut Prompt");
     shortcutPromptText = "";
     window.lastActionWithShortcut = false;
@@ -2309,8 +2311,9 @@ async continueStory(opts) =>
   let startWithStoryText = "";
 
   if(continueWithAction) {
-    if (codeDebug) console.log("continueStory : continueWithAction");
-    startWithStoryText = getStoryPrefixData(window.continueMode)+"\n"+inlineCompletionText;
+    //if (codeDebug) console.log("continueStory : continueWithAction");
+    //startWithStoryText = getStoryPrefixData(window.continueMode)+"\n"+inlineCompletionText;
+    startWithStoryText = inlineCompletionText;
     if (codeDebug) console.log("continueStory : continueWithAction : startWithStoryText :\n" + startWithStoryText);
   } else {
     // the paragraph before the one being generated should be in the startWith, to help the AI see the continuation of the story properly (i.e. not get distracted by the instructions)
@@ -2362,6 +2365,7 @@ async continueStory(opts) =>
     window.lastGenerationStreamObj = ai({
       instruction: () => {
         let lines = [];
+        console.log("continueStory : shortcutPromptText :", shortcutPromptText);
         lines.push(sharedInstructionPrefix.evaluateItem);
         lines.push(window.taskPrompt);
 
@@ -2712,11 +2716,17 @@ async autoUpdateBibleSection(options) =>
 
   window.currentAutoBibleGeneration[options.title] = ai({
     instruction: bibleAutoUpdatePrompt.evaluateItem,
+    onStart: (data) => {
+      if (codeDebug) console.log("autoUpdateBibleSection : ai : onStart : data", data);
+    },
     onChunk: (data) => {
       if (!data.isFromStartWith) {
         buffer += data.textChunk;
       }
-    }
+    },
+    onFinish: (data) => {
+      if (codeDebug) console.log("autoUpdateBibleSection : ai : onFinish : data", data);
+    },
   });
 
   let bibleData;
@@ -2729,11 +2739,12 @@ async autoUpdateBibleSection(options) =>
     
     if (bibleData.stopReason === 'error' || bibleData.stopReason === 'user') {
       if (codeDebug) console.log("autoUpdateBibleSection : generateBibleSection : ifstop");
-      generatedContent = targetTextarea.trim();
+      //generatedContent = targetTextarea.trim();
+      generatedContent = buffer;
     } else {
       if (codeDebug) console.log("autoUpdateBibleSection : try : ifstop : else");
-      let finalValue = targetTextarea.trim();
-      buffer = finalValue;
+      //let finalValue = targetTextarea.trim();
+      //buffer = finalValue;
       tab.content = buffer.trim();
     }
   } catch (e) {
@@ -2758,6 +2769,7 @@ async autoUpdateBibleSection(options) =>
     
     if (bibleData && bibleData.stopReason !== 'error' && bibleData.stopReason !== 'user') {
       storyBibleRegenBtn.style.display = 'inline-block';
+      storyBibleUpdateBtn.style.display = 'inline-block';
     }
     
     window.generatingBibleSection[options.title] = false;
@@ -2828,6 +2840,7 @@ async generateBibleSection(options) =>
 
   storyBibleGenerateBtn.hidden = true;
   storyBibleRegenBtn.hidden = true;
+  storyBibleUpdateBtn.hidden = true;
   storyBibleDeleteBtn.disabled = true;
   storyBibleStopBtn.hidden = false;
   storyBibleLoader.hidden = false;
@@ -2885,6 +2898,8 @@ async generateBibleSection(options) =>
     }
     storyBibleRegenBtn.hidden = (window.notepadEditorEl.value.trim() === "");
     storyBibleRegenBtn.disabled = false;
+    storyBibleUpdateBtn.hidden = (window.notepadEditorEl.value.trim() === "");
+    storyBibleUpdateBtn.disabled = false;
     storyBibleDeleteBtn.hidden = (window.notepadEditorEl.value.trim() === "");
     storyBibleDeleteBtn.disabled = false;
     storyBibleGenerateBtn.hidden = (window.notepadEditorEl.value.trim() !== "");
@@ -3829,6 +3844,27 @@ setNotebookDataForScope(scope, data) =>
   else window.currentStoryNotebookData = normalized;
   return normalized;
 
+ensureBibleCustomFormatEditor() =>
+  if(window.bibleCustomFormatEditorEl) return window.bibleCustomFormatEditorEl;
+  if(typeof notepadBibleFormatCtn === "undefined") return null;
+  window.bibleCustomFormatEditorEl = createTextEditor({
+    textStyleRules: getStoryTextStyleRules(),
+  });
+  bibleCustomFormatEditorEl.id = "bibleCustomFormatEditorEl";
+  bibleCustomFormatEditorEl.class = "text";
+  bibleCustomFormatEditorEl.placeholder = "A place to specify the format for this section.";
+  bibleCustomFormatEditorEl.style.cssText = "width:100%; height:0.25vh; min-height:0; max-height:0.5vh; display:block; resize:vertical;";
+  notepadBibleFormatCtn.innerHTML = "";
+  notepadBibleFormatCtn.appendChild(bibleCustomFormatEditorEl);
+  bibleCustomFormatEditorEl.addEventListener("input", function() {
+    if(window.notepadLoadingContent) return;
+    clearTimeout(window.notepadSaveDebounceTimeout);
+    window.notepadSaveDebounceTimeout = setTimeout(() => {
+      saveNotepadEditorToActiveTab();
+    }, 350);
+  });
+  return bibleCustomFormatEditorEl;
+
 ensureNotepadEditor() =>
   if(window.notepadEditorEl) return window.notepadEditorEl;
   if(typeof notepadEditorCtn === "undefined") return null;
@@ -3881,6 +3917,7 @@ loadNotepadTabContent(tabId) =>
   data.activeTabId = tab.id;
   setNotebookDataForScope(scope, data);
   ensureNotepadEditor();
+  ensureBibleCustomFormatEditor();
   if(window.notepadEditorEl) {
     // if (codeDebug) console.log("Tab title: " + tab.title);
     window.notepadLoadingContent = true;
@@ -3896,12 +3933,36 @@ loadNotepadTabContent(tabId) =>
     const match = storyBiblePlaceholders.find(item => item.title === tab.title);
     // if (codeDebug) console.log("Title Match:");
     // if (codeDebug) console.log(match);
-    if (match) { notepadEditorEl.placeholder = match.placeholder;} else {notepadEditorEl.placeholder = "A place to add notes that won't affect the story.";};
-    window.notepadEditorEl.value = tab.content || "";
+    let content = tab.content;
+    if (match) {
+      notepadEditorEl.placeholder = match.placeholder;
+      notepadBibleFormatCtn.hidden = false;
+      if (window.bibleCustomFormatEditorEl) {
+        const match = content.match(/(^|\n)#=====#(\n|$)/);
+        if (match) {
+          window.bibleCustomFormatEditorEl.value = content.slice(0, match.index).trim();
+          content = content.slice(match.index + match[0].length).trim();
+        }
+      }
+    } else {
+      notepadEditorEl.placeholder = "A place to add notes that won't affect the story.";
+      notepadBibleFormatCtn.hidden = true;
+      if (window.bibleCustomFormatEditorEl) {
+        window.bibleCustomFormatEditorEl.value = "";
+      }
+    }
+    window.notepadEditorEl.value = content || "";
+
     storyBibleCheckboxKey = 'storyBibleAutoCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,'');
     if (codeDebug) console.log("loadNotepadTabContent : storyBibleCheckboxKey : " + storyBibleCheckboxKey);
     storyBibleAutoUpdateCheckBox.checked = localStorage[storyBibleCheckboxKey] || "";
+
+    storyBibleCustomFormatCheckboxKey = 'storyBibleCustomFormatCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,'');
+    if (codeDebug) console.log("loadNotepadTabContent : storyBibleCustomFormatCheckboxKey : " + storyBibleCustomFormatCheckboxKey);
+    storyBibleCustomFormatCheckBox.checked = localStorage[storyBibleCustomFormatCheckboxKey] || "";
+
     storyBibleRegenBtn.hidden = (window.notepadEditorEl.value.trim() === "");
+    storyBibleUpdateBtn.hidden = (window.notepadEditorEl.value.trim() === "");
     storyBibleDeleteBtn.hidden = (window.notepadEditorEl.value.trim() === "");
     storyBibleGenerateBtn.hidden = (window.notepadEditorEl.value.trim() !== "");
     window.notepadLoadingContent = false;
@@ -3952,6 +4013,11 @@ setActiveNotepadTab(tabId) =>
   storyBibleCheckboxKey = 'storyBibleAutoCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,'');
   if (codeDebug) console.log("setActiveNotepadTab : storyBibleCheckboxKey : " + storyBibleCheckboxKey);
   storyBibleAutoUpdateCheckBox.value = localStorage[storyBibleCheckboxKey] || "";
+  
+  storyBibleCustomFormatCheckboxKey = 'storyBibleCustomFormatCheckbox_' + notepadTabsSelectEl.selectedOptions[0].text.replace(/[<>\s\/]/g,'');
+  if (codeDebug) console.log("setActiveNotepadTab : storyBibleCustomFormatCheckboxKey : " + storyBibleCustomFormatCheckboxKey);
+  storyBibleCustomFormatCheckBox.value = localStorage[storyBibleCustomFormatCheckboxKey] || "";
+
   loadNotepadTabContent(nextTab.id);
   if(scope === "app") requestAppNotebookSaveDebounced({debounceMs:400});
   else requestSaveCurrentStory({debounceMs:400});
@@ -5639,23 +5705,23 @@ getCombinedStoryBibleText(prompt) =>
 bibleAutoUpdatePrompt
   You are an intelligent assistant that updates a Story Bible using new story events.
   Your task is to update ONLY ONE section at a time. You must be precise and preserve existing information unless it is explicitly contradicted.
-  
+  \s
   ---
-  
+  \s
   CURRENT SECTION: [window.generatingBibleSectionName]
-
+  \s
   You are ONLY updating this section. Any information not belonging to this section must be ignored.
-
+  \s
   ---
-  
+  \s
   You are given:
   * The EXISTING CONTENT for the section: [window.generatingBibleSectionName]
   * NEW STORY EVENTS since the last update
   * The STORY OVERVIEW for context and initial details like characters, inventory, lore.
   * ADDITIONAL CONTENT to be added/populated in the section
-
+  \s
   ---
-  
+  \s
   OTHER SECTIONS (REFERENCE ONLY - DO NOT MODIFY):
   <Player Info> → Player attributes, inventory, time, weather
   <Other Characters> → Non-player characters only
@@ -5663,11 +5729,11 @@ bibleAutoUpdatePrompt
   <Events/Plot> → Events and outcomes
   <Lore/History> → Factions and world lore
   <Plot Threads> → Ongoing mysteries and clues
-  
+  \s
   ---
-  
+  \s
   RULES:
-  
+  \s
   1. Read the NEW STORY EVENTS carefully.
   2. Compare them to the EXISTING CONTENT for the target section only.
   3. Update ONLY information that is new or directly changed.
@@ -5678,26 +5744,26 @@ bibleAutoUpdatePrompt
   8. Short sections only, no long descriptions or details.
   9. When listing relationships, include only: NAME (relationship). - Do not describe the other character.
   10. Refer to the player as their name if given, otherwise "Main Character".
-    - If multiple are specified in the overview, use "Main Characters" and structure them separately under Player Info & Inventory.
+  \t- If multiple are specified in the overview, use "Main Characters" and structure them separately under Player Info & Inventory.
   11. Use the reference format as a guideline; you may add new sections or reorganize if needed.
   12. Do not place Main Character inside Other Characters.
   13. Only Main Character should be in Player Info, never in any other section
   14. Do not mix sections.
-    - Mysteries do not go in Lore & Factions.
-    - Factions do not go in Mysteries & Plot Threads.
+  \t- Mysteries do not go in Lore & Factions.
+  \t- Factions do not go in Mysteries & Plot Threads.
   15. Do not infer or invent information.
-    - Only include facts explicitly stated in the NEW STORY EVENTS.
-    - If a field is requested but you have no data but "Not discovered"
+  \t- Only include facts explicitly stated in the NEW STORY EVENTS.
+  \t- If a field is requested but you have no data but "Not discovered"
   16. You MUST populate additional data as new entries or lines depending on what's needed: [bibleSectionAdditionaInfo()]
   19. Examples of INVALID behavior:
-    - Adding LOCATION data inside Other Characters → INVALID
-    - Adding FACTIONS inside Plot Threads → INVALID
-    - Adding INVENTORY items outside Player Info → INVALID
-
-    These must NEVER occur.
-
+  \t- Adding LOCATION data inside Other Characters → INVALID
+  \t- Adding FACTIONS inside Plot Threads → INVALID
+  \t- Adding INVENTORY items outside Player Info → INVALID
+  \s
+  \tThese must NEVER occur.
+  \s
   GUIDELINES:
-
+  \s
   - The '#' symbols in the reference format are **guidelines only**.
   - DO NOT output any '#' symbols in the final result.
   - Instead, use 2 spaces per level to indicate hierarchy in the output.
@@ -5708,8 +5774,8 @@ bibleAutoUpdatePrompt
   - Field labels (text BEFORE ":") must be ALL CAPS (e.g., NAME:, AGE:).
   - Field values (text AFTER ":") must use normal sentence case or proper title case.
   - Proper names must NEVER be written in all caps.
-    Correct: NAME: John Doe
-    Incorrect: NAME: JOHN DOE
+  \tCorrect: NAME: John Doe
+  \tIncorrect: NAME: JOHN DOE
   - Include relevant details from NEW STORY EVENTS and EXISTING CONTENT like: HEIGHT, OCCUPATION, LOCATION, etc.
   - Reference format shows typical structure but is not mandatory.
   - Indentation must reflect hierarchy: subsections are indented 2 spaces relative to their parent.
@@ -5721,26 +5787,26 @@ bibleAutoUpdatePrompt
   - Do NOT infer standard possessions.
   ---
   REFERENCE FORMAT (guideline)
-
+  \s
   Here is a suggested structure you can use as a reference. You may add, skip, or reorganize sections if the story requires it.
   Do not output the word "SECTION:" in the final answer.
   [bibleSectionFormat(window.generatingBibleSectionName)]
-
+  \s
   ---
   CONTEXT:
-  
+  \s
   STORY OVERVIEW:
   [literal(document.getElementById('storyOverviewEl').value.trim() || "(Not specified.)")]
-
+  \s
   EXISTING CONTENT:
   [literal(window.existingSectionContentForPrompt || "(This section is currently empty.)")]
-
+  \s
   NEW STORY EVENTS:
   [literal(window.newEventsForPrompt)]
-
+  \s
   ADDITIONAL CONTENT:
   [bibleSectionAdditionaInfo()]
-  
+  \s
   ---
   TASK:
   Write the complete updated content of the current section.
@@ -5768,7 +5834,7 @@ bibleSectionFormat(section) =>
       ## RELATIONSHIPS: NAME (relation); NAME (relation)
       
       # DATE: (Weekday - Month Day, Year)
-      # TIME: (Specific if possible, daypart )
+      # TIME: (Specific if possible, daypart)
       # WEATHER:`
     );
   }

@@ -1,3 +1,11 @@
+## 2026.06.01
+Features:
+- Added an option to customize the templates used to generate bible sections.
+- Added a button to update the current bible section using events since the last update.
+
+Fix:
+- Improved story continuation so that it wont output # Ambient Outro immediately.
+
 ## 2026.03.31
 Features:
 - Added "Erotica" Genre - By request
@@ -7,7 +15,7 @@ Fix:
 
 ## 2026.03.26
 Features:
-- Added AI Prompt feild to shortcuts, this allows you to add data that wont be saved permanently to the story, but is loaded when the shortcut is used. useful for story mechanics to help AI remember what it's supposed to do.
+- Added AI Prompt field to shortcuts, this allows you to add data that wont be saved permanently to the story, but is loaded when the shortcut is used. useful for story mechanics to help AI remember what it's supposed to do.
 - UI fixes
 
 Removed:
