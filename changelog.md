@@ -1,3 +1,7 @@
+## 2026.06.11 (DanielPotter)
+Fix:
+- Fixed the story arc text always being included in the AI context.
+
 ## 2026.06.10 (DanielPotter)
 Features:
 - Added an undo button to reverse a manual bible section update.

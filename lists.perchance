@@ -250,7 +250,7 @@ getExtraSharedInstructionPrefixStuff() =>
   lines.push(toggleSendStoryInputCheckbox.checked && whatHappensNextEl.value.trim() !== "" ? `NEXT_ACTION (Use the following context to progress the story, performing the actions listed e.g; talking, texting, whispering, driving, etc): ${literal(whatHappensNextEl.value.replace(/\n/g, " "))}` : null);
   console.log("shortcutPromptText : "+shortcutPromptText);
   lines.push(shortcutPromptText ? literal(shortcutPromptText) : null);
-  lines.push(!storyArcInstructionEl.hidden && storyArcInstructionEl.value.trim() !== "" ? `NEXT_KEY_EVENT (*naturally* guide the story towards this): ${literal(storyArcInstructionEl.value.replace(/\n/g, " "))}` : null);
+  lines.push(!storyArcInstructionCtn.hidden && storyArcInstructionEl.value.trim() !== "" ? `NEXT_KEY_EVENT (*naturally* guide the story towards this): ${literal(storyArcInstructionEl.value.replace(/\n/g, " "))}` : null);
   lines.push(toggleSendStoryInputCheckbox.checked && whatHappensNextEl.value.trim() !== "" ? `TASK: Above is the player's next action/speech/command in this adventure. You are the world's best Game Master - a masterful storyteller with a perfect sense for pacing, intrigue, and a knack for keeping players on the edge of their seat, and your task is to write the result of NEXT_ACTION (including NPC dialogue and story progression if relevant)` : null);
   lines = lines.filter(l => l); // filter out `null` lines
   let text = lines.join("\n").trim();
