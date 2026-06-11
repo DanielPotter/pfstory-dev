@@ -4063,6 +4063,12 @@ loadNotepadTabContent(tabId) =>
     }
     window.notepadEditorEl.value = content || "";
 
+    if (window.notepadEditorEl.value.startsWith("##PerchanceCode##\n")) {
+      window.notepadEditorEl.setTextStyleRules(getPerchanceTextStyleRules());
+    } else {
+      applyTextStyleRulesToEditor();
+    }
+
     storyBibleRegenBtn.hidden = (window.notepadEditorEl.value.trim() === "");
     storyBibleUpdateBtn.hidden = (window.notepadEditorEl.value.trim() === "");
     storyBibleDeleteBtn.hidden = (window.notepadEditorEl.value.trim() === "");
@@ -5260,6 +5266,19 @@ getStoryTextStyleRules() =>
   ];
   let advanced = buildThemeAdvancedTextRules(s.advancedRules || []);
   if(advanced.length) rules = rules.concat(advanced);
+  return rules;
+
+getPerchanceTextStyleRules() =>
+  let rules = [
+    {match: /.+/g, style: "font-family:monospace;"},
+    {match: /\/\/.*$/g, style: "color:#7d8799;"},
+    {match: /^\s*\$?\w+\(.*\) =>\s*$/g, style: "color:light-dark(#c67600, #e5c07b); font-weight:bold;"},
+    {match: /^\s*\$output(?=\s*=)/g, style: "color:light-dark(#435156, #56b6c2);"},
+    {match: /[=\[\]]/g, style: "color:light-dark(#435156, #56b6c2);"},
+    {match: /[{}]/g, style: "color:light-dark(#CB4B16, #fcae1d);"},
+
+    {match: /(\s|^|—)\*\*(.+?)\*\*(?=\s|$|—|\.|,)/g, style: "font-weight:bold;"}, // **Bold Text**
+  ];
   return rules;
 
 applyTextStyleRulesToEditor() =>

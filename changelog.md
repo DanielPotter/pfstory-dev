@@ -1,4 +1,7 @@
 ## 2026.06.11 (DanielPotter)
+Enhancements:
+- Added rudimentary syntax highlighting for notebook pages that contain Perchance code.
+
 Fix:
 - Fixed the story arc text always being included in the AI context.
 
