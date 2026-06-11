@@ -4,6 +4,7 @@ Enhancements:
 
 Fix:
 - Fixed the story arc text always being included in the AI context.
+- Fixed notebook not saving when content is cut or pasted.
 
 ## 2026.06.10 (DanielPotter)
 Features:
