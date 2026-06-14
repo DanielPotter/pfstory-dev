@@ -3580,6 +3580,7 @@ triggerImportFilePicker() =>
     if(file) {
       try {
         await importStoriesFromBlob(file);
+        requestAppNotebookSaveDebounced({debounceMs:400});
         closeImportModal();
       } catch(e) {
         console.error(e);
@@ -3608,6 +3609,7 @@ async importStoriesFromUrl() =>
     }
     let blob = await res.blob();
     await importStoriesFromBlob(blob);
+    requestAppNotebookSaveDebounced({debounceMs:400});
     closeImportModal();
   } catch(e) {
     console.error(e);

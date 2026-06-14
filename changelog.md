@@ -1,6 +1,7 @@
 ## 2026.06.14 (DanielPotter)
 Fix:
 - Fixed shortcut prompt text not clearing after it is used, causing it to influence the story longer than expected.
+- Fixed app notebook not persisting after import if the page is reloaded without displaying the app notebook first.
 
 ## 2026.06.11 (DanielPotter)
 Enhancements:

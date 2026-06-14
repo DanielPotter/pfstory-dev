@@ -859,6 +859,7 @@ if(localStorage.welcomeComplete) {
       if(!file) return;
       try {
         await importStoriesFromBlob(file);
+        requestAppNotebookSaveDebounced({debounceMs:400});
         closeImportModal();
       } catch(err) {
         console.error(err);
