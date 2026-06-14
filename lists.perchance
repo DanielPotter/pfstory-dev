@@ -2100,8 +2100,8 @@ async continueStory(opts) =>
     welcomeModalEl.hidden = false;
     return;
   }
-  if(localStorage.shortcutId !== null) {
-    console.log("setting Shortcut Shit");
+  if(localStorage.shortcutId) {
+    console.log("setting shortcut stuff");
     const promptText = localStorage.shortcutPromptText;
     if (promptText && promptText.trim()) {
       console.log("found Shortcut promptext: "+promptText);

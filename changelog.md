@@ -1,3 +1,7 @@
+## 2026.06.14 (DanielPotter)
+Fix:
+- Fixed shortcut prompt text not clearing after it is used, causing it to influence the story longer than expected.
+
 ## 2026.06.11 (DanielPotter)
 Enhancements:
 - Added rudimentary syntax highlighting for notebook pages that contain Perchance code.
