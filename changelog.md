@@ -1,3 +1,7 @@
+## 2026.06.15 (DanielPotter)
+Features:
+- Added a button to create a plugin notebook page. It's currently in the notepad page menu. This may change in the future as it doesn't make sense here.
+
 ## 2026.06.14 (DanielPotter)
 Features:
 - Added a notebook-based plugin system to allow for dynamic instructions. I'm mostly using this to prototype narrative sequencing, but I plan to document and develop this feature more to allow for custom automation and story handling.

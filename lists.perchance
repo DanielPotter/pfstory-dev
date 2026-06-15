@@ -172,9 +172,7 @@ getExtraInstructionsForConsequencesOfAction() =>
   lines.push(storyGameModeSelectEl.value === "game" ? "You should sometimes note any interactable objects/items/exits/etc in the environment, in typical text game style.": null);
   lines.push(storyNamingConventionSelectEl.value !== "" ? `Use ${storyNamingConventionSelectEl.value} naming conventions.` : null);
   lines.push(getDifficultyModifiers());
-  getNotebookPlugins().forEach(plugin => {
-    plugin.hooks?.getExtraInstructionsForConsequencesOfAction?.(lines);
-  })
+  plugins.broadcast("getExtraInstructionsForConsequencesOfAction", lines);
   lines = lines.filter(l => l); // filter out `null` lines
   let text = lines.join("\n").trim();
   return text;
@@ -191,9 +189,7 @@ getExtraInstructionsForContinueWithoutTask() =>
   // if(responseStyleEl.value === "@@@custom" && storyWritingStyleCustomInputEl.value.trim()) {
   //   lines.push("WRITING_STYLE: "+storyWritingStyleCustomInputEl.value);
   // }
-  getNotebookPlugins().forEach(plugin => {
-    plugin.hooks?.getExtraInstructionsForContinueWithoutTask?.(lines);
-  })
+  plugins.broadcast("getExtraInstructionsForContinueWithoutTask", lines);
   lines = lines.filter(l => l);
   let text = lines.join("\n").trim();
   return text;  
@@ -447,6 +443,7 @@ generationEventHandlers
     scheduleAutoNameCheck();
     updateButtonsDisplay();
     if(storySoFarEl.value.length > 1000) whatHappensNextEl.placeholder = "(Optional) What will you do next?";
+    plugins.broadcast("storyGenerationFinished", data);
 
 ///////////////////////////////////////////////////////////
 // Multi-story + KV persistence (IndexedDB via kv-plugin) //
@@ -2026,7 +2023,7 @@ getStartWithText() =>
   let startWithText = paras.slice(-numToPutInStartWith).join("\n\n").trim();
   return startWithText + "\n\n";
 
-story
+storyApi
   requestSave = [requestSaveCurrentStory]
   getPreprocessedStoryText = [getPreprocessedStoryText]
   getStorySoFar() => return storySoFarEl.value;
@@ -3897,7 +3894,7 @@ applyNotebookSettingsFromStoryData(data) =>
   window.currentStoryNotebookData = normalizeNotebookData(data.notebook);
   if(typeof updateNotepadForCurrentStory === "function") updateNotepadForCurrentStory();
 
-notepad
+notepadApi
   getScope = [getNotebookScope]
   setScope = [setNotepadScope]
   getDataForScope = [getNotebookDataForScope]
@@ -3911,6 +3908,7 @@ notepad
     const data = this.getDataForScope(scope);
     return data.tabs.find(t => t.name === name);
   addTab = [addNotepadTab]
+  requestAppNotebookSave = [requestAppNotebookSaveDebounced]
 
 getNotebookScope() =>
   const allowedScopes = ["app", "bible", "story"];
@@ -4003,15 +4001,29 @@ saveNotepadEditorToActiveTab() =>
   let data = getNotebookDataForScope(scope);
   let active = data.tabs.find(t => t.id === data.activeTabId) || data.tabs[0];
   if(active) {
+    let newContent = window.notepadEditorEl.value || "";
     if (scope === "bible") {
       let currentTemplate = window.bibleCustomFormatEditorEl?.value;
       const defaultTemplate = bibleSectionTemplate(active.title);
       if (currentTemplate.trim() === defaultTemplate.trim()) {
         currentTemplate = "";
       }
-      active.content = joinBibleContent(currentTemplate, window.notepadEditorEl.value || "");
+      newContent = joinBibleContent(currentTemplate, newContent);
+      if (active.content == newContent) {
+        return;
+      }
+      active.content = newContent;
+      window.bibleCacheDirty = true;
     } else {
-      active.content = window.notepadEditorEl.value || "";
+      if (active.content == newContent) {
+        //console.log("saveNotepadEditorToActiveTab : Skipping update to tab because there is no change.")
+        return;
+      }
+      active.content = newContent;
+      if (isPerchanceCode(active.content)) {
+        //console.log("saveNotepadEditorToActiveTab : Marking plugin cache as dirty.")
+        window.pluginCacheDirty = true;
+      }
     }
     active.lastEditedTime = Date.now();
   }
@@ -4024,10 +4036,6 @@ saveNotepadEditorToActiveTab() =>
   if(typeof notepadPanel !== "undefined" && !notepadPanel.hidden) renderNotepadTabs({skipLoad:true});
   if(scope === "app") requestAppNotebookSaveDebounced({debounceMs:400});
   else requestSaveCurrentStory({debounceMs:400});
-  window.bibleCacheDirty = true;
-  if (isPerchanceCode(active.content)) {
-    window.pluginCacheDirty = true;
-  }
 
 loadNotepadTabContent(tabId) =>
   if (codeDebug) console.log("loadNotepadTabContent: " + tabId);
@@ -4236,14 +4244,14 @@ setNotepadScope(scope) =>
   window.notepadBibleFooterCtn.hidden = true;
   renderNotepadTabs();
 
-addNotepadTab(name, scope) =>
+addNotepadTab(name, opts) =>
   const isNotepadOpen = isNotepadPanelOpen();
   if (isNotepadOpen) saveNotepadEditorToActiveTab();
-  scope = scope || getNotebookScope();
+  let scope = opts?.scope || getNotebookScope();
   let data = getNotebookDataForScope(scope);
   let id = `tab_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
   let title = name || `Page ${data.tabs.length + 1}`;
-  let tab = {id, title, content:"", lastEditedTime:Date.now()};
+  let tab = {id, title, content:opts?.content??"", lastEditedTime:Date.now()};
   data.tabs.push(tab);
   if (isNotepadOpen) data.activeTabId = id;
   setNotebookDataForScope(scope, data);
@@ -4349,6 +4357,52 @@ setupNotepadResizer() =>
 // Notebook Plugin System //
 ////////////////////////////
 
+plugins
+  publicApi
+    list = [this.getParent.list]
+    getEnabled = [this.getParent.getEnabled]
+  list(opts) =>
+    // Note: This function does not reinitialize plugins if they're dirty. This is makes it safe for plugins to use.
+    const plugins = [];
+    return this.pluginCache.forEach(tree => {
+      if (tree.selectOne.IsPlugin) {
+        const plugin = tree.selectOne;
+        if (opts?.enabled && !plugin.Enabled) return;
+        plugins.push(plugin);
+      }
+    });
+  getEnabled() =>
+    return this.list({enabled:true});
+  getApiObject() =>
+    return {
+      notepad: notepadApi,
+      plugins: plugins.publicApi,
+      story: storyApi,
+    };
+  broadcast(name, ...args) =>
+    const hookNames = [];
+    switch (name)
+    {
+      case "getExtraInstructionsForConsequencesOfAction":
+      case "getExtraInstructionsForContinueWithoutTask":
+        hookNames.push(name, "getExtraInstructions");
+        break;
+      default:
+        hookNames.push(name);
+        break;
+    }
+    const results = [];
+    getNotebookPlugins().forEach(plugin => {
+      hookNames.forEach(hookName => {
+        try {
+          results.push(plugin.hooks?.[hookName]?.(...args));
+        } catch (e) {
+          console.error(`Failed to execute hook ${hookName} for plugin ${plugin.Name ?? '<unnamed>'}`, e);
+        }
+      });
+    });
+    return results;
+
 isPerchanceCode(content) =>
   return content.match(/^(##PerchanceCode##|\/\/##PerchanceCode##\/\/)\n/);
 
@@ -4360,9 +4414,13 @@ getPerchanceTreesFromAllNotebookData() =>
   if (window.pluginCache) {
     window.pluginCache.forEach(tree => {
       if (tree.selectOne.IsPlugin) {
-        tree.selectOne.deinit?.();
+        deinitializePlugin(tree.selectOne);
       }
     });
+  }
+
+  if (isNotepadPanelOpen()) {
+    saveNotepadEditorToActiveTab();
   }
 
   const tabs = [
@@ -4371,10 +4429,12 @@ getPerchanceTreesFromAllNotebookData() =>
   ];
   const trees = [];
   for (const tab of tabs) {
-    const match = isPerchanceCode(tab.content);
+    let content = tab.content;
+    const match = isPerchanceCode(content);
     if (match) {
       try {
-        trees.push(createPerchanceTree(tab.content.slice(match[0].length)));
+        //console.log("getPerchanceTreesFromAllNotebookData : content :", content)
+        trees.push(createPerchanceTree(content.slice(match[0].length)));
       } catch (e) {
         console.error(`Failed to create Perchance tree for tab: ${tab.title}`, e);
       }
@@ -4393,16 +4453,75 @@ getPerchanceTreesFromAllNotebookData() =>
   return trees;
 
 initializePlugin(plugin) =>
-  plugin.init?.({
-    story,
-    notepad,
-  });
+  plugin.Enabled = plugin.Enabled ?? true;
+  plugin.init?.(plugins.getApiObject());
+
+deinitializePlugin(plugin) =>
+  plugin.deinit?.();
 
 getNotebookPlugins() =>
   return getPerchanceTreesFromAllNotebookData().filter(tree => tree.selectOne.IsPlugin).map(tree => tree.selectOne);
 
 getNotebookShortcutTrees() =>
-  return getPerchanceTreesFromAllNotebookData().filter(tree => !tree.selectOne.IsPlugin);
+  const trees = [];
+  getPerchanceTreesFromAllNotebookData().forEach(tree => {
+    if (!tree.selectOne.IsPlugin) {
+      trees.push(tree);
+    } else if (tree.selectOne.ShortcutLists) {
+      trees.push(tree.selectOne.ShortcutLists);
+    }
+  });
+  return trees;
+
+getPluginTemplate() =>
+  // Note: We have to escape each comment that follows a space because Perchance's preprocessor will strip them out even though they are inside strings.
+  const lines = [
+    "//##PerchanceCode##//",
+    "$output = [__plugin]",
+    "",
+    "__plugin",
+    "  IsPlugin = [true]",
+    "  ApiVersion = 1",
+    "  Name = My Plugin",
+    "  init(api) =>",
+    "    \// This will give you access to select functions from the story generator.",
+    "    window.api = api;",
+    "    \// The API includes the following:",
+    "    \// - notepad.getScope(): Gets the active scope selected in the notepad.",
+    "    \// - notepad.setScope(scope)",
+    "    \// - notepad.getDataForScope(scope)",
+    "    \// - notepad.setDataForScope(scope, data)",
+    "    \// - notepad.getTab(tabId, scope)",
+    "    \// - notepad.getTabByName(name, scope)",
+    "    \// - notepad.addTab(name, opts): Options include scope and content.",
+    "    \// - notepad.requestAppNotebookSave(): Saves the app notebook. This is required if you make any changes to app notebook pages.",
+    "    \// - plugins.list(): Gets all loaded plugins.",
+    "    \// - plugins.getEnabled(): Gets only the loaded plugins that are enabled.",
+    "    \// - story.requestSave(): This will save the current story (including the story notebook). This is required if you make any changes to story notebook pages.",
+    "    \// - story.getPreprocessedStoryText(): Gets the current story with summary substitutions.",
+    "    \// - story.getStorySoFar(): Gets the raw story text.",
+    "    \// - story.setStorySoFar(content): Sets the raw story text.",
+    "  \// deinit() => \// This is called whenever the plugin is unloaded, which occurs whenever the code for any generator changes. This may get smarter in the future, but that's the behavior for now.",
+    "  hooks",
+    "    \// getExtraInstructionsForConsequencesOfAction(lines) =>",
+    "    \// getExtraInstructionsForContinueWithoutTask(lines) =>",
+    "    \// getExtraInstructions(lines) => \// This is called for both, making it useful for instructions you always want in the generation instructions.",
+    "    \// storyGenerationFinished(data) =>",
+    "  \// ShortcutLists = [$root] \// You can either expose all of your lists from this page or add them explicitly as sublists.",
+    "",
+    "color",
+    "  red",
+    "  green",
+    "  blue",
+  ];
+  let content = lines.join("\n");
+  return content;
+
+addPluginTab() =>
+  let scope = getNotebookScope();
+  let data = getNotebookDataForScope(scope);
+  let title = `Plugin Page ${data.tabs.length + 1}`;
+  addNotepadTab(title, {content: getPluginTemplate()});
 
 ///////////
 // Music //
