@@ -172,6 +172,9 @@ getExtraInstructionsForConsequencesOfAction() =>
   lines.push(storyGameModeSelectEl.value === "game" ? "You should sometimes note any interactable objects/items/exits/etc in the environment, in typical text game style.": null);
   lines.push(storyNamingConventionSelectEl.value !== "" ? `Use ${storyNamingConventionSelectEl.value} naming conventions.` : null);
   lines.push(getDifficultyModifiers());
+  getNotebookPlugins().forEach(plugin => {
+    plugin.hooks?.getExtraInstructionsForConsequencesOfAction?.(lines);
+  })
   lines = lines.filter(l => l); // filter out `null` lines
   let text = lines.join("\n").trim();
   return text;
@@ -188,6 +191,9 @@ getExtraInstructionsForContinueWithoutTask() =>
   // if(responseStyleEl.value === "@@@custom" && storyWritingStyleCustomInputEl.value.trim()) {
   //   lines.push("WRITING_STYLE: "+storyWritingStyleCustomInputEl.value);
   // }
+  getNotebookPlugins().forEach(plugin => {
+    plugin.hooks?.getExtraInstructionsForContinueWithoutTask?.(lines);
+  })
   lines = lines.filter(l => l);
   let text = lines.join("\n").trim();
   return text;  
@@ -1854,6 +1860,7 @@ async switchToStory(id, opts) =>
   loadChatDataIntoInputAreas(data);
   window.loadingStoryInProgress = false;
   window.bibleCacheDirty = true;
+  window.pluginCacheDirty = true;
 
   updateCurrentStoryTitleDisplay();
   renderStoriesList();
@@ -2018,6 +2025,12 @@ getStartWithText() =>
   if(numToPutInStartWith === 0) return "\n\n";
   let startWithText = paras.slice(-numToPutInStartWith).join("\n\n").trim();
   return startWithText + "\n\n";
+
+story
+  requestSave = [requestSaveCurrentStory]
+  getPreprocessedStoryText = [getPreprocessedStoryText]
+  getStorySoFar() => return storySoFarEl.value;
+  setStorySoFar(content) => storySoFarEl.value = content;
 
 getPreprocessedStoryText() =>
   if (codeDebug) console.log("getPreprocessedStoryText");
@@ -3884,6 +3897,21 @@ applyNotebookSettingsFromStoryData(data) =>
   window.currentStoryNotebookData = normalizeNotebookData(data.notebook);
   if(typeof updateNotepadForCurrentStory === "function") updateNotepadForCurrentStory();
 
+notepad
+  getScope = [getNotebookScope]
+  setScope = [setNotepadScope]
+  getDataForScope = [getNotebookDataForScope]
+  setDataForScope = [setNotebookDataForScope]
+  getTab(tabId, scope) =>
+    scope = scope || getNotebookScope();
+    const data = this.getDataForScope(scope);
+    return data.tabs.find(t => t.id === tabId);
+  getTabByName(name, scope) =>
+    scope = scope || getNotebookScope();
+    const data = this.getDataForScope(scope);
+    return data.tabs.find(t => t.name === name);
+  addTab = [addNotepadTab]
+
 getNotebookScope() =>
   const allowedScopes = ["app", "bible", "story"];
   return allowedScopes.includes(window.notepadScope) ? window.notepadScope : "story";
@@ -3903,24 +3931,6 @@ setNotebookDataForScope(scope, data) =>
   if(scope === "app") window.appNotebookData = normalized;
   else window.currentStoryNotebookData = normalized;
   return normalized;
-
-getPerchanceTreesFromAllNotebookData() =>
-  const tabs = [
-    ...getNotebookDataForScope("story").tabs,
-    ...getNotebookDataForScope("app").tabs,
-  ];
-  const trees = [];
-  for (const tab of tabs) {
-    const match = tab.content.match(/^##PerchanceCode##\n/);
-    if (match) {
-      try {
-        trees.push(createPerchanceTree(tab.content.slice(match[0].length)));
-      } catch (e) {
-        console.error(`Failed to create Perchance tree for tab: ${tab.title}`, e);
-      }
-    }
-  }
-  return trees;
 
 ensureBibleCustomFormatEditor() =>
   if(window.bibleCustomFormatEditorEl) return window.bibleCustomFormatEditorEl;
@@ -4015,6 +4025,9 @@ saveNotepadEditorToActiveTab() =>
   if(scope === "app") requestAppNotebookSaveDebounced({debounceMs:400});
   else requestSaveCurrentStory({debounceMs:400});
   window.bibleCacheDirty = true;
+  if (isPerchanceCode(active.content)) {
+    window.pluginCacheDirty = true;
+  }
 
 loadNotepadTabContent(tabId) =>
   if (codeDebug) console.log("loadNotepadTabContent: " + tabId);
@@ -4068,7 +4081,7 @@ loadNotepadTabContent(tabId) =>
     }
     window.notepadEditorEl.value = content || "";
 
-    if (window.notepadEditorEl.value.startsWith("##PerchanceCode##\n")) {
+    if (isPerchanceCode(window.notepadEditorEl.value)) {
       window.notepadEditorEl.setTextStyleRules(getPerchanceTextStyleRules());
     } else {
       applyTextStyleRulesToEditor();
@@ -4165,6 +4178,9 @@ onNotepadTabsSelectChange(value) =>
   }
   setActiveNotepadTab(value);
 
+isNotepadPanelOpen() =>
+  return document.body.classList.contains("notepadOpen");
+
 openNotepadPanel() =>
   if(typeof notepadPanel === "undefined") return;
   notepadPanel.hidden = false;
@@ -4220,18 +4236,21 @@ setNotepadScope(scope) =>
   window.notepadBibleFooterCtn.hidden = true;
   renderNotepadTabs();
 
-addNotepadTab(name) =>
-  saveNotepadEditorToActiveTab();
-  let scope = getNotebookScope();
+addNotepadTab(name, scope) =>
+  const isNotepadOpen = isNotepadPanelOpen();
+  if (isNotepadOpen) saveNotepadEditorToActiveTab();
+  scope = scope || getNotebookScope();
   let data = getNotebookDataForScope(scope);
   let id = `tab_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
   let title = name || `Page ${data.tabs.length + 1}`;
-  data.tabs.push({id, title, content:"", lastEditedTime:Date.now()});
-  data.activeTabId = id;
+  let tab = {id, title, content:"", lastEditedTime:Date.now()};
+  data.tabs.push(tab);
+  if (isNotepadOpen) data.activeTabId = id;
   setNotebookDataForScope(scope, data);
-  renderNotepadTabs();
+  if (isNotepadOpen) renderNotepadTabs();
   if(scope === "app") requestAppNotebookSaveDebounced({debounceMs:400});
   else requestSaveCurrentStory({debounceMs:400});
+  return tab;
 
 renameActiveNotepadTab() =>
   if (codeDebug) console.log("renameActiveNotepadTab");
@@ -4325,6 +4344,69 @@ setupNotepadResizer() =>
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   });
+
+////////////////////////////
+// Notebook Plugin System //
+////////////////////////////
+
+isPerchanceCode(content) =>
+  return content.match(/^(##PerchanceCode##|\/\/##PerchanceCode##\/\/)\n/);
+
+getPerchanceTreesFromAllNotebookData() =>
+  if (!window.pluginCacheDirty && window.pluginCache) {
+    return window.pluginCache;
+  }
+
+  if (window.pluginCache) {
+    window.pluginCache.forEach(tree => {
+      if (tree.selectOne.IsPlugin) {
+        tree.selectOne.deinit?.();
+      }
+    });
+  }
+
+  const tabs = [
+    ...getNotebookDataForScope("story").tabs,
+    ...getNotebookDataForScope("app").tabs,
+  ];
+  const trees = [];
+  for (const tab of tabs) {
+    const match = isPerchanceCode(tab.content);
+    if (match) {
+      try {
+        trees.push(createPerchanceTree(tab.content.slice(match[0].length)));
+      } catch (e) {
+        console.error(`Failed to create Perchance tree for tab: ${tab.title}`, e);
+      }
+    }
+  }
+  console.log("getPerchanceTreesFromAllNotebookData :", trees)
+  window.pluginCache = trees;
+  window.pluginCacheDirty = false;
+
+  trees.forEach(tree => {
+    if (tree.selectOne.IsPlugin) {
+      initializePlugin(tree.selectOne);
+    }
+  });
+
+  return trees;
+
+initializePlugin(plugin) =>
+  plugin.init?.({
+    story,
+    notepad,
+  });
+
+getNotebookPlugins() =>
+  return getPerchanceTreesFromAllNotebookData().filter(tree => tree.selectOne.IsPlugin).map(tree => tree.selectOne);
+
+getNotebookShortcutTrees() =>
+  return getPerchanceTreesFromAllNotebookData().filter(tree => !tree.selectOne.IsPlugin);
+
+///////////
+// Music //
+///////////
 
 onMusicSelectChange(userInitiated) =>
   window.currentBackgroundMusic = backgroundMusicSelectEl.value || "";

@@ -1,4 +1,10 @@
 ## 2026.06.14 (DanielPotter)
+Features:
+- Added a notebook-based plugin system to allow for dynamic instructions. I'm mostly using this to prototype narrative sequencing, but I plan to document and develop this feature more to allow for custom automation and story handling.
+
+Enhancements:
+- Added support for using `//##PerchanceCode##// to mark a notebook page as Perchance code. This will simplify things moving forward and the old uncommented header will be unsupported once I make it easier to flag a page as Perchance code.
+
 Fix:
 - Fixed shortcut prompt text not clearing after it is used, causing it to influence the story longer than expected.
 - Fixed app notebook not persisting after import if the page is reloaded without displaying the app notebook first.

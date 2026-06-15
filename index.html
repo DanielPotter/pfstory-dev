@@ -1262,8 +1262,7 @@ if(localStorage.welcomeComplete) {
         }
         
         function executeShortcutButton(data) {
-          // TODO: Consider caching trees.
-          const perchanceTrees = getPerchanceTreesFromAllNotebookData();
+          const perchanceTrees = getNotebookShortcutTrees();
           if(data.type === "action") {
             let insertionText = evaluateShortcutText(data.insertionText, perchanceTrees);
             if(data.actionInsertionType === "replace") whatHappensNextEl.value = insertionText;
