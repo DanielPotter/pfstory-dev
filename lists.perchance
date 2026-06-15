@@ -17,6 +17,7 @@ createTextEditor = {import:pftexteditor} // a higher-performance version of <tex
 icon = {import:fa-icon-plugin}
 generateImage = {import:text-to-image-plugin}
 roll = {import:dice-plugin} // Added to assist in story progression
+createPerchanceTree = {import:advanced-createperchancetree}
 
 //////////////////////////////////////////////////////////////
 // These are the instructions to the AI. You can edit them  //
