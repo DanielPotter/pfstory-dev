@@ -2121,6 +2121,7 @@ async continueStory(opts) =>
     welcomeModalEl.hidden = false;
     return;
   }
+  plugins.broadcast("continueStory", opts);
   if(localStorage.shortcutId) {
     console.log("setting shortcut stuff");
     const promptText = localStorage.shortcutPromptText;
@@ -5673,6 +5674,7 @@ getMessagesWithSummaryReplacements(text, opts) =>
       highestLevelSeen = level;
     }
   }
+  plugins.broadcast("getMessagesWithSummaryReplacements", messagesWithSummaryReplacements);
   return messagesWithSummaryReplacements;
   
 summaryPromptInstruction

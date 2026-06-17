@@ -1,3 +1,9 @@
+## 2026.06.17 (DanielPotter)
+Features:
+- Added two more plugin hooks:
+  - `continueStory(opts)`: Called right after the generate story button is pressed. You can set `opts.continueInline` to force a generation to continue a paragraph.
+  - `getMessagesWithSummaryReplacements(messages)`: Called before the function with the same name returns. You can use this to modify the story given to the AI. 
+
 ## 2026.06.15 (DanielPotter)
 Features:
 - Added a button to create a plugin notebook page. It's currently in the notepad page menu. This may change in the future as it doesn't make sense here.
