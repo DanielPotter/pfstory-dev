@@ -1,6 +1,7 @@
 ## 2026.06.15 (DanielPotter)
 Features:
 - Added a button to create a plugin notebook page. It's currently in the notepad page menu. This may change in the future as it doesn't make sense here.
+- Added a new plugin hook: `getDynamicContext(lines)`. Any content added to the lines array will be added to the AI prompt after the overview but before the story so far. This is a good place to put information that the AI should know about, but doesn't need to drive what happens next.
 
 Enhancements:
 - Allow Perchance code to import generators.

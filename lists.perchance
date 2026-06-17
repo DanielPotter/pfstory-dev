@@ -185,6 +185,14 @@ getDynamicNotes() =>
   }
   return notes.length > 0 ? "\n# Notes:\n- "+notes.join("\n- ") : "";
 
+getDynamicContext() =>
+  if(codeDebug) console.log("getDynamicContext");
+  let lines = [];
+  plugins.broadcast("getDynamicContext", lines);
+  lines = lines.filter(l => l); // filter out `null` lines
+  let text = lines.join("\n").trim();
+  return text;
+
 getExtraInstructionsForContinueWithoutTask() =>
   let lines = [];
   // if(responseStyleEl.value === "@@@custom" && storyWritingStyleCustomInputEl.value.trim()) {
@@ -242,6 +250,8 @@ sharedInstructionPrefix // stuff that we put before all tasks - i.e. general con
   [getCombinedStoryBibleText()]
   # Overall, here's what the adventure should be about[storySoFarEl.value.trim().length < 1000 ? " (lead into this slowly)" : ""]: // while the story is less than 1000 characters long, we tell the AI to lead into it slowly, so it doesn't try to immediately jump to important plot points that are specified in the overview
   OVERVIEW: [literal(storyOverviewEl.value.trim()) || "(Unsure, you decide.)"]
+  \s
+  [literal(getDynamicContext())]
   \s
   # STORY SO FAR[storyOverviewEl.value.trim() ? ` (previous player actions are prefixed with ">")` : ""]:
   [literal(window.processedStorySoFarText || "(Nothing yet.)")]
@@ -4504,6 +4514,7 @@ getPluginTemplate() =>
     "    \// - story.setStorySoFar(content): Sets the raw story text.",
     "  \// deinit() => \// This is called whenever the plugin is unloaded, which occurs whenever the code for any generator changes. This may get smarter in the future, but that's the behavior for now.",
     "  hooks",
+    "    \// getDynamicContext(lines) => \// Any content added to the lines array will be added to the AI prompt after the overview but before the story so far. This is a good place to put information that the AI should know about, but doesn't need to drive what happens next.",
     "    \// getExtraInstructionsForConsequencesOfAction(lines) =>",
     "    \// getExtraInstructionsForContinueWithoutTask(lines) =>",
     "    \// getExtraInstructions(lines) => \// This is called for both, making it useful for instructions you always want in the generation instructions.",
