@@ -4377,9 +4377,9 @@ plugins
     // Note: This function does not reinitialize plugins if they're dirty. This is makes it safe for plugins to use.
     const plugins = [];
     return this.pluginCache.forEach(tree => {
-      if (tree.selectOne.IsPlugin) {
+      if (tree.selectOne.isPlugin) {
         const plugin = tree.selectOne;
-        if (opts?.enabled && !plugin.Enabled) return;
+        if (opts?.enabled && !plugin.enabled) return;
         plugins.push(plugin);
       }
     });
@@ -4409,7 +4409,7 @@ plugins
         try {
           results.push(plugin.hooks?.[hookName]?.(...args));
         } catch (e) {
-          console.error(`Failed to execute hook ${hookName} for plugin ${plugin.Name ?? '<unnamed>'}`, e);
+          console.error(`Failed to execute hook ${hookName} for plugin ${plugin.name ?? '<unnamed>'}`, e);
         }
       });
     });
@@ -4425,8 +4425,10 @@ getPerchanceTreesFromAllNotebookData() =>
 
   if (window.pluginCache) {
     window.pluginCache.forEach(tree => {
-      if (tree.selectOne.IsPlugin) {
-        deinitializePlugin(tree.selectOne);
+      const possiblePlugin = tree.selectOne;
+      if (possiblePlugin.isPlugin && possiblePlugin._isInitialized) {
+        deinitializePlugin(possiblePlugin);
+        possiblePlugin._isInitialized = false;
       }
     });
   }
@@ -4457,30 +4459,43 @@ getPerchanceTreesFromAllNotebookData() =>
   window.pluginCacheDirty = false;
 
   trees.forEach(tree => {
-    if (tree.selectOne.IsPlugin) {
-      initializePlugin(tree.selectOne);
+    const possiblePlugin = tree.selectOne;
+    if (possiblePlugin.isPlugin || possiblePlugin.IsPlugin) {
+      initializePlugin(possiblePlugin);
     }
   });
 
   return trees;
 
 initializePlugin(plugin) =>
-  plugin.Enabled = plugin.Enabled ?? true;
-  plugin.init?.(plugins.getApiObject());
+  // Make sure metadata properties are configured.
+  plugin.isPlugin = true;
+  plugin.enabled = plugin.enabled ?? plugin.Enabled ?? true;
+  plugin.name = plugin.name ?? plugin.Name;
+  plugin.apiVersion = plugin.apiVersion ?? plugin.ApiVersion;
+  plugin.shortcutLists = plugin.shortcutLists ?? plugin.ShortcutLists;
+  // Run initialization.
+  if (plugin.enabled) {
+    // TODO: Wrap in a try/catch with UI to display failure to initialize.
+    plugin.init?.(plugins.getApiObject());
+    plugin._isInitialized = true;
+  }
 
 deinitializePlugin(plugin) =>
+  // TODO: Wrap in a try/catch with UI to display failure to deinitialize.
   plugin.deinit?.();
 
 getNotebookPlugins() =>
-  return getPerchanceTreesFromAllNotebookData().filter(tree => tree.selectOne.IsPlugin).map(tree => tree.selectOne);
+  return getPerchanceTreesFromAllNotebookData().filter(tree => tree.selectOne.isPlugin).map(tree => tree.selectOne);
 
 getNotebookShortcutTrees() =>
   const trees = [];
   getPerchanceTreesFromAllNotebookData().forEach(tree => {
-    if (!tree.selectOne.IsPlugin) {
+    const potentialPlugin = tree.selectOne;
+    if (potentialPlugin.isPlugin && potentialPlugin.shortcutLists) {
+      trees.push(potentialPlugin.shortcutLists)
+    } else {
       trees.push(tree);
-    } else if (tree.selectOne.ShortcutLists) {
-      trees.push(tree.selectOne.ShortcutLists);
     }
   });
   return trees;
@@ -4492,9 +4507,9 @@ getPluginTemplate() =>
     "$output = [__plugin]",
     "",
     "__plugin",
-    "  IsPlugin = [true]",
-    "  ApiVersion = 1",
-    "  Name = My Plugin",
+    "  isPlugin = [true]",
+    "  apiVersion = 1",
+    "  name = My Plugin",
     "  init(api) =>",
     "    \// This will give you access to select functions from the story generator.",
     "    window.api = api;",
@@ -4520,7 +4535,7 @@ getPluginTemplate() =>
     "    \// getExtraInstructionsForContinueWithoutTask(lines) =>",
     "    \// getExtraInstructions(lines) => \// This is called for both, making it useful for instructions you always want in the generation instructions.",
     "    \// storyGenerationFinished(data) =>",
-    "  \// ShortcutLists = [$root] \// You can either expose all of your lists from this page or add them explicitly as sublists.",
+    "  \// shortcutLists = [$root] \// You can either expose all of your lists from this page or add them explicitly as sublists.",
     "",
     "color",
     "  red",

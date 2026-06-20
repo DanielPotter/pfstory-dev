@@ -1,3 +1,7 @@
+## 2026.06.20 (DanielPotter)
+Enhancements:
+- Use consistent casing for plugin properties. The old casing will still be respected but are now deprecated.
+
 ## 2026.06.17 (DanielPotter)
 Features:
 - Added two more plugin hooks:
