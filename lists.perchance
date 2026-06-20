@@ -4400,6 +4400,8 @@ plugins
       notepad: notepadApi,
       plugins: plugins.publicApi,
       story: storyApi,
+      // This will give raw access to this generator. I'm not going to document this, but it's here for anyone technical enough to use it. If you're reading this, that includes you. :)
+      _window: window,
     };
   broadcast(name, ...args) =>
     const hookNames = [];

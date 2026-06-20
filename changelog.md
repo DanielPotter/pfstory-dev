@@ -3,6 +3,7 @@ Enhancements:
 - Adjusted plugin property casing for consistency. The old casing will still be respected but are now deprecated.
 - `storyGenerationFinished` hook: When the story generation ends due to the end of a paragraph, `data.stopReason` now equals `paragraph` instead of `user`.
 - Simplified the plugin template and add a link to the plugin documentation.
+- Added raw access to the generator for plugins. This will not be documented, but exists for those who like hacking.
 
 ## 2026.06.17 (DanielPotter)
 Features:
