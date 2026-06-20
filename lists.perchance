@@ -4512,9 +4512,12 @@ getNotebookShortcutTrees() =>
 
 getPluginTemplate() =>
   // Note: We have to escape each comment that follows a space because Perchance's preprocessor will strip them out even though they are inside strings.
+  // TODO: The documentation link should be accessible from the UI.
   const lines = [
     "//##PerchanceCode##//",
     "$output = [__plugin]",
+    "",
+    "\// See documentation here: https://github.com/DanielPotter/pfstory-dev/blob/main/docs/plugins.md",
     "",
     "__plugin",
     "  isPlugin = [true]",
@@ -4523,34 +4526,8 @@ getPluginTemplate() =>
     "  init(api) =>",
     "    \// This will give you access to select functions from the story generator.",
     "    window.api = api;",
-    "    \// The API includes the following:",
-    "    \// - notepad.getScope(): Gets the active scope selected in the notepad.",
-    "    \// - notepad.setScope(scope)",
-    "    \// - notepad.getDataForScope(scope)",
-    "    \// - notepad.setDataForScope(scope, data)",
-    "    \// - notepad.getTab(tabId, scope)",
-    "    \// - notepad.getTabByName(name, scope)",
-    "    \// - notepad.addTab(name, opts): Options include scope and content.",
-    "    \// - notepad.requestAppNotebookSave(): Saves the app notebook. This is required if you make any changes to app notebook pages.",
-    "    \// - plugins.list(): Gets all loaded plugins.",
-    "    \// - plugins.getEnabled(): Gets only the loaded plugins that are enabled.",
-    "    \// - story.requestSave(): This will save the current story (including the story notebook). This is required if you make any changes to story notebook pages.",
-    "    \// - story.getPreprocessedStoryText(): Gets the current story with summary substitutions.",
-    "    \// - story.getStorySoFar(): Gets the raw story text.",
-    "    \// - story.setStorySoFar(content): Sets the raw story text.",
-    "  \// deinit() => \// This is called whenever the plugin is unloaded, which occurs whenever the code for any generator changes. This may get smarter in the future, but that's the behavior for now.",
-    "  hooks",
-    "    \// getDynamicContext(lines) => \// Any content added to the lines array will be added to the AI prompt after the overview but before the story so far. This is a good place to put information that the AI should know about, but doesn't need to drive what happens next.",
-    "    \// getExtraInstructionsForConsequencesOfAction(lines) =>",
-    "    \// getExtraInstructionsForContinueWithoutTask(lines) =>",
-    "    \// getExtraInstructions(lines) => \// This is called for both, making it useful for instructions you always want in the generation instructions.",
-    "    \// storyGenerationFinished(data) =>",
-    "  \// shortcutLists = [$root] \// You can either expose all of your lists from this page or add them explicitly as sublists.",
-    "",
-    "color",
-    "  red",
-    "  green",
-    "  blue",
+    "  \// hooks \// Add your hooks as functions under here.",
+    "  \// shortcutLists = [$root] \// Alternatively, you can add specific lists that you want to expose.",
   ];
   let content = lines.join("\n");
   return content;

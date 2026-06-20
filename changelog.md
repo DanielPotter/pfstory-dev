@@ -1,13 +1,14 @@
 ## 2026.06.20 (DanielPotter)
 Enhancements:
-- Use consistent casing for plugin properties. The old casing will still be respected but are now deprecated.
+- Adjusted plugin property casing for consistency. The old casing will still be respected but are now deprecated.
 - `storyGenerationFinished` hook: When the story generation ends due to the end of a paragraph, `data.stopReason` now equals `paragraph` instead of `user`.
+- Simplified the plugin template and add a link to the plugin documentation.
 
 ## 2026.06.17 (DanielPotter)
 Features:
 - Added two more plugin hooks:
   - `continueStory(opts)`: Called right after the generate story button is pressed. You can set `opts.continueInline` to force a generation to continue a paragraph.
-  - `getMessagesWithSummaryReplacements(messages)`: Called before the function with the same name returns. You can use this to modify the story given to the AI. 
+  - `getMessagesWithSummaryReplacements(messages)`: Called before the function with the same name returns. You can use this to modify the story given to the AI.
 
 ## 2026.06.15 (DanielPotter)
 Features:
