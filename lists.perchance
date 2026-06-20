@@ -383,7 +383,10 @@ generationEventHandlers
             // storySoFarEl.value += trimmed;
             // window.currentGenerationText = trimmed;
             window.withheldTrailingNewlines = "";
-            try { window.lastGenerationStreamObj.stop(); } catch(e) {}
+            try {
+              window.lastGenerationStreamObj.stopReason = "paragraph";
+              window.lastGenerationStreamObj.stop();
+            } catch(e) {}
           }
         }
       
@@ -454,6 +457,13 @@ generationEventHandlers
     scheduleAutoNameCheck();
     updateButtonsDisplay();
     if(storySoFarEl.value.length > 1000) whatHappensNextEl.placeholder = "(Optional) What will you do next?";
+
+    if (window.lastGenerationStreamObj.stopReason) {
+      // The stop reason is always "user" if the stop() is called. However, we want to be able to
+      // distinguish between when the user actually presses the stop button and when the generation
+      // is stopped due to the paragraph limiter.
+      data.stopReason = window.lastGenerationStreamObj.stopReason;
+    }
     plugins.broadcast("storyGenerationFinished", data);
 
 ///////////////////////////////////////////////////////////
