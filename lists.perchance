@@ -2248,6 +2248,7 @@ async continueStory(opts) =>
       storySoFarEl.value = storySoFarEl.value.trim() + "\n\n" + "> "+whatHappensNextEl.value.trim();
       whatHappensNextEl.value = "";
       localStorage.whatHappensNext = "";
+      handleWhatHappensNextInput();
     if (codeDebug) console.log("continueStory : continueInline : END");
     }
   }

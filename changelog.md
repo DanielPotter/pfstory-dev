@@ -5,6 +5,9 @@ Enhancements:
 - Simplified the plugin template and add a link to the plugin documentation.
 - Added raw access to the generator for plugins. This will not be documented, but exists for those who like hacking.
 
+Fix:
+- Fixed the button for deleting the "what happens next text" not always appearing or disappearing. It is now hidden when the text is submitted and unhidden when filled by a shortcut.
+
 ## 2026.06.17 (DanielPotter)
 Features:
 - Added two more plugin hooks:

@@ -1277,6 +1277,7 @@ if(localStorage.welcomeComplete) {
             localStorage.shortcutId = data.id;
             
             if(data.autoContinue === "yes") continueStory();
+            else handleWhatHappensNextInput();
           } else if(data.type === "story") {
             let insertionText = evaluateShortcutText(data.insertionText, perchanceTrees);
             if(data.storyInsertionType === "inline") storySoFarEl.value = storySoFarEl.value.trim() + insertionText;
@@ -2011,7 +2012,7 @@ setInterval(async () => {
       <!-- ── About ── -->
       <div class="tab-panel" id="panel-about">
         <p class="byline">Created/modified by <b>@iyruk</b>. Based on <em>ai-rpg</em>, with several enhancements for better story generation.</p>
-        <p class="byline">Additional changes made by <b>@DanielPotter</b> and is tracked on <a href="https://github.com/DanielPotter/pfstory-dev" target="_blank">GitHub</a>.</p>
+        <p class="byline">Additional changes made by <b>@DanielPotter</b> and are tracked on <a href="https://github.com/DanielPotter/pfstory-dev" target="_blank">GitHub</a>.</p>
    
         <h4>Features</h4>
         <ul>
