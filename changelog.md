@@ -7,6 +7,7 @@ Enhancements:
 
 Fix:
 - Fixed the button for deleting the "what happens next text" not always appearing or disappearing. It is now hidden when the text is submitted and unhidden when filled by a shortcut.
+- Fixed the writing style tooltip getting cut off on narrow screens (like on mobile devices). It is now centered.
 
 ## 2026.06.17 (DanielPotter)
 Features:
