@@ -41,7 +41,7 @@ consequencesOfActionTaskInstruction
   TASK: Above is the player's next action/speech/command in this adventure. You are the world's best Game Master - a masterful storyteller with a perfect sense for pacing, intrigue, and a knack for keeping players on the edge of their seat, and your task is to write the result of NEXT_ACTION (including NPC dialogue and story progression if relevant). When referring to the player, use a [storyPerspective] person perspective. The Game Master only simulates the world, not the player; your response should not invoke new player actions - only describe the consequences of the player's actions, and *gives life to them* to create an engaging story.
   \s // blank line
   [getStoryPrefixData(window.continueMode)]
-  When you're done with the direct consequences of the player's action, write `# Ambient Outro` followed by one or two non-repetitive details of outside environment, distant sounds, scents, tangential callbacks, etc.
+  When you're done with the direct consequences of the player's action, end the paragraph and write `# Ambient Outro`, followed by one or two non-repetitive details of outside environment, distant sounds, scents, tangential callbacks, etc.
   // # Ambient Outro //(One or two non-repetitive details of outside environment, distant sounds, scents, tangential callbacks, etc.): // Note: we use "# Ambient Outro" as a stop sequence, so this "# Ambient Outro" line and the stuff below never gets written. This is a galaxy brain trick to prevent the AI from including anything other than consequences in the response. Otherwise it sometimes includes other stuff even in spite of instructions to the contrary.
   // (a short ambient environmental/outside outro to round off the above paragraph)
   $output = [this.joinItems("\n").trim()]
@@ -276,7 +276,7 @@ generationEventHandlers
     if (aiDebug) console.log(data);
     window.gotFirstChunk = false; // first 'used'/appended chunk of the output
     window.withheldTrailingNewlines = ""; // if a chunk ends in a newline, we don't immediately add it - instead we put it in this buffer, in case it's the end of the generated text, in which case we don't want to add it, since that cause "scroll jank" when we later remove it
-    window.currentGenerationTextRaw = "";
+    window.currentGenerationText = "";
     window.currentGenerationBaseText = storySoFarEl.value;
     window.currentGenerationCharCount = 0;
     window.currentGenerationParagraphLimit = storyWritingLengthEl.value || 1;
@@ -344,7 +344,7 @@ generationEventHandlers
       window.withheldTrailingNewlines = "";
       if (aiDebug) console.log("generationEventHandlers : move trailing new lines : END");
       if (aiDebug) console.log(textChunk);
-      
+
       // remove trailing newlines - to prevent "scroll jank" in onFinish when we trim() the story
       let trailingNewlines = textChunk.match(/\n+$/)?.[0]
       if(trailingNewlines) {
@@ -360,28 +360,26 @@ generationEventHandlers
       
       if(storySoFarEl.value.endsWith("\n# Ambient Outro")) {
         if (aiDebug) console.log("generationEventHandlers : found Outro");
-        storySoFarEl.value = storySoFarEl.value.replace(/\n# Ambient Outro$/g, "")
+        storySoFarEl.value = storySoFarEl.value.replace(/\n+# Ambient Outro$/g, "")
+        try {
+          window.currentGenerationStopTriggered = true;
+          window.lastGenerationStreamObj.stopReason = "outro";
+          window.lastGenerationStreamObj.stop();
+        } catch(e) {}
       }
 
-      if(rawChunk.length > 0) {
-        window.currentGenerationTextRaw += rawChunk;
-        window.currentGenerationCharCount += rawChunk.length;
+      if(textChunk.length > 0) {
+        window.currentGenerationText += textChunk;
+        window.currentGenerationCharCount += textChunk.length;
       }
 
-      // TODO: Figure out another way to implement the paragraph limit to allow for live-editing.
         if(!window.currentGenerationStopTriggered && window.currentGenerationParagraphLimit !== -1 && window.currentGenerationCharCount >= 100 && window.continueMode !== "inline") {
           if (aiDebug) console.log("generationEventHandlers : Paragraph limit");
-          let stopIndex = getParagraphStopIndex(window.currentGenerationTextRaw, window.currentGenerationParagraphLimit);
+          let stopIndex = getParagraphStopIndex(window.currentGenerationText + window.withheldTrailingNewlines, window.currentGenerationParagraphLimit);
           if(stopIndex >= 0) {
             window.currentGenerationStopTriggered = true;
-            if (aiDebug) console.log("generationEventHandlers : currentGenerationTextRaw : \n" + window.currentGenerationTextRaw);
-            let trimmed = window.currentGenerationTextRaw.slice(0, stopIndex);
-            if (aiDebug) console.log("generationEventHandlers : trimmed : \n" + trimmed);
-            // let trimmed = window.currentGenerationTextRaw.slice(0, stopIndex).trimEnd();
-            if (aiDebug) console.log("generationEventHandlers : currentGenerationBaseText : \n" + window.currentGenerationBaseText);
-            storySoFarEl.value = (window.currentGenerationBaseText || "") + "\n\n" +trimmed;
-            // storySoFarEl.value += trimmed;
-            // window.currentGenerationText = trimmed;
+            const lengthAfterStop = window.currentGenerationCharCount - stopIndex - window.withheldTrailingNewlines.length;
+            storySoFarEl.value = storySoFarEl.value.slice(0, storySoFarEl.value.length - lengthAfterStop);
             window.withheldTrailingNewlines = "";
             try {
               window.lastGenerationStreamObj.stopReason = "paragraph";

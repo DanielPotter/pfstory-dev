@@ -1,3 +1,7 @@
+## 2026.06.25 (DanielPotter)
+Fix:
+- Fixed edits that are made during story generation being reverted when generation stops due to the paragraph limiter. You can now edit the story while it's being generated, just like in ai-rpg!
+
 ## 2026.06.20 (DanielPotter)
 Enhancements:
 - Adjusted plugin property casing for consistency. The old casing will still be respected but are now deprecated.
