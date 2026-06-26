@@ -89,4 +89,4 @@ Hook functions allow plugins to respond to specific events in the story generati
 - **getExtraInstructionsForContinueWithoutTask(lines)** - Called when continuing the story without an active task. Add instruction lines to guide the AI response.
 - **getExtraInstructions(lines)** - Called for all generation scenarios. Add instruction lines that should apply to both action consequences and continue without task.
 - **storyGenerationFinished(data)** - Called after the AI finishes generating story content. Use this to perform post-generation processing or logging.
-
+- **storyLoaded(storyData)** - Called when a story has finished loading. This occurs both on initial load and when a story is selected in the Stories panel.

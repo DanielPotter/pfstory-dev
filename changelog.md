@@ -1,4 +1,8 @@
 ## 2026.06.25 (DanielPotter)
+Enhancements:
+- Revamped plugin management so that plugins are only reloaded when they are edited. Previously, all plugins would be reloaded if any were modified.
+- Added the `storyLoaded` hook.
+
 Fix:
 - Fixed edits that are made during story generation being reverted when generation stops due to the paragraph limiter. You can now edit the story while it's being generated, just like in ai-rpg!
 

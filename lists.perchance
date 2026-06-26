@@ -589,7 +589,7 @@ normalizeThemeSettingsByScheme(settingsByScheme, opts) =>
 normalizeMusicRepeatMode(val) =>
   return val === "next" ? "next" : "repeat";
 
-normalizeNotebookData(data) =>
+normalizeNotebookData(data, scope) =>
   // if (codeDebug) console.log("normalizeNotebookData");
   // if (codeDebug) console.log("Data");
   // if (codeDebug) console.log(data);
@@ -601,11 +601,11 @@ normalizeNotebookData(data) =>
     if(title.trim().toLowerCase() === "default") title = "Page 1";
     let content = (t?.content ?? "").toString();
     let lastEditedTime = Number(t?.lastEditedTime || 0);
-    return {id, title, content, lastEditedTime};
+    return {id, title, content, lastEditedTime, scope};
   });
   if(tabs.length === 0) {
     let id = `tab_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
-    tabs = [{id, title:"Page 1", content:"", lastEditedTime:Date.now()}];
+    tabs = [{id, title:"Page 1", content:"", lastEditedTime:Date.now(), scope}];
   }
   const storyBible = [
     "<Player Info>",
@@ -626,7 +626,8 @@ normalizeNotebookData(data) =>
         id,
         title,
         content: "",
-        lastEditedTime: Date.now()
+        lastEditedTime: Date.now(),
+        scope,
       });
     }
   });
@@ -677,8 +678,8 @@ normalizeStoryData(data) =>
     hideDefaultMusic: !!data.hideDefaultMusic,
     musicRepeatMode: normalizeMusicRepeatMode(data.musicRepeatMode),
     themeSettingsByScheme: normalizeThemeSettingsByScheme(data.themeSettingsByScheme, {allowNull:true}),
-    notebook: normalizeNotebookData(data.notebook),
-    appNotebook: normalizeNotebookData(data.appNotebook),
+    notebook: normalizeNotebookData(data.notebook, "story"),
+    appNotebook: normalizeNotebookData(data.appNotebook, "app"),
     sharedIntroMessage: (data.sharedIntroMessage ?? ""),
     currentTrackedInfo: (data.currentTrackedInfo ?? ""),
     doNotSendStoryInputEnabled: !!data.doNotSendStoryInputEnabled,
@@ -778,7 +779,7 @@ getBlankStoryData() =>
     storyOverview:"",
     storySoFar:"",
     whatHappensNext:"",
-    notebook: normalizeNotebookData(null),
+    notebook: normalizeNotebookData(null, "story"),
   });
 
 getCurrentStoryDataForStorage() =>
@@ -800,8 +801,8 @@ getCurrentStoryDataForStorage() =>
     hideDefaultMusic: !!window.hideDefaultMusic,
     musicRepeatMode: normalizeMusicRepeatMode(window.musicRepeatMode),
     themeSettingsByScheme: window.currentStoryThemeSettingsByScheme ? normalizeThemeSettingsByScheme(window.currentStoryThemeSettingsByScheme, {allowNull:false}) : null,
-    notebook: normalizeNotebookData(window.currentStoryNotebookData),
-    appNotebook: normalizeNotebookData(window.appNotebookData),
+    notebook: normalizeNotebookData(window.currentStoryNotebookData, "story"),
+    appNotebook: normalizeNotebookData(window.appNotebookData, "app"),
     sharedIntroMessage: window.currentSharedIntroMessage || "",
     currentTrackedInfo: currentTrackedInfoEl.value,
     doNotSendStoryInputEnabled: !!toggleSendStoryInputCheckbox.checked,
@@ -1272,7 +1273,7 @@ requestAppMediaSaveDebounced(opts) =>
 
 async saveAppNotebookToKvNow() =>
   ensureStoryManager();
-  let snapshot = normalizeNotebookData(window.appNotebookData);
+  let snapshot = normalizeNotebookData(window.appNotebookData, "app");
   window.storyManager.appNotebookSaveChain = (window.storyManager.appNotebookSaveChain || Promise.resolve()).then(async () => {
     await kv.storiesMeta.set(APP_NOTEBOOK_KEY, snapshot);
   }).catch(console.error);
@@ -1464,7 +1465,7 @@ async createNewStory(opts) =>
   });
   if(!newStory && data.appNotebook) {
     if (codeDebug) console.log("Found Notebook Data, importing")
-    let snapshot = normalizeNotebookData(data.appNotebook);
+    let snapshot = normalizeNotebookData(data.appNotebook, "app");
     window.appNotebookData = snapshot
   }
   
@@ -1876,7 +1877,6 @@ async switchToStory(id, opts) =>
   loadChatDataIntoInputAreas(data);
   window.loadingStoryInProgress = false;
   window.bibleCacheDirty = true;
-  window.pluginCacheDirty = true;
 
   updateCurrentStoryTitleDisplay();
   renderStoriesList();
@@ -1891,6 +1891,7 @@ async switchToStory(id, opts) =>
   try { document.scrollingElement.scrollTop = 0; } catch(e) {}
 
   window.storyManager.isLoading = false;
+  plugins.onStorySwitched(data);
 
 async initStoriesSystem() =>
   ensureStoryManager();
@@ -1923,7 +1924,7 @@ async initStoriesSystem() =>
   window.appCustomMusic = normalizeCustomMediaList(appMusic);
   window.appCustomBackgrounds = normalizeCustomMediaList(appBackgrounds);
   let appNotebook = await kv.storiesMeta.get(APP_NOTEBOOK_KEY);
-  window.appNotebookData = normalizeNotebookData(appNotebook);
+  window.appNotebookData = normalizeNotebookData(appNotebook, "app");
 
   // Legacy localStorage -> kv upgrade
   // if(legacyStoryDataExistsInLocalStorage()) {
@@ -2002,6 +2003,9 @@ async initStoriesSystem() =>
   window.storyManager.isReady = true;
   window.storyManager.isLoading = false;
   setTimeout(() => initStoryObserver(), 1000)
+
+  plugins.cache.init();
+  plugins.broadcast("storyLoaded", data);
 
 getParagraphEndRegex() => return /[.。．！!？?ー":*»’”—–。]$/;
 
@@ -3361,8 +3365,8 @@ getCurrentStoryData() =>
     hideDefaultMusic: !!window.hideDefaultMusic,
     musicRepeatMode: normalizeMusicRepeatMode(window.musicRepeatMode),
     themeSettingsByScheme: normalizeThemeSettingsByScheme(getEffectiveThemeSettingsByScheme(), {allowNull:false}),
-    notebook: normalizeNotebookData(window.currentStoryNotebookData),
-    appNotebook: normalizeNotebookData(window.appNotebookData),
+    notebook: normalizeNotebookData(window.currentStoryNotebookData, "story"),
+    appNotebook: normalizeNotebookData(window.appNotebookData, "app"),
     sharedIntroMessage: window.currentSharedIntroMessage || "",
     // responseStyle: responseStyleEl.value,
     storyWritingStyleResponseInput: storyWritingStyleResponseInputEl.value,
@@ -3912,7 +3916,7 @@ applyThemeSettingsFromStoryData(data) =>
 
 applyNotebookSettingsFromStoryData(data) =>
   data = normalizeStoryData(data);
-  window.currentStoryNotebookData = normalizeNotebookData(data.notebook);
+  window.currentStoryNotebookData = normalizeNotebookData(data.notebook, "story");
   if(typeof updateNotepadForCurrentStory === "function") updateNotepadForCurrentStory();
 
 notepadApi
@@ -3942,11 +3946,11 @@ getNotebookDataForScope(scope) =>
   let data = (scope === "app") ? window.appNotebookData : window.currentStoryNotebookData;
   // if (codeDebug) console.log("notebook data:");
   // if (codeDebug) console.log(data);
-  return normalizeNotebookData(data);
+  return normalizeNotebookData(data, scope === "app" ? "app" : "story");
 
 setNotebookDataForScope(scope, data) =>
   scope = (scope === "app") ? "app" : "story";
-  let normalized = normalizeNotebookData(data);
+  let normalized = normalizeNotebookData(data, scope);
   if(scope === "app") window.appNotebookData = normalized;
   else window.currentStoryNotebookData = normalized;
   return normalized;
@@ -4042,8 +4046,8 @@ saveNotepadEditorToActiveTab() =>
       }
       active.content = newContent;
       if (isPerchanceCode(active.content)) {
-        //console.log("saveNotepadEditorToActiveTab : Marking plugin cache as dirty.")
-        window.pluginCacheDirty = true;
+        //console.log("saveNotepadEditorToActiveTab : Marking plugin as dirty.")
+        plugins.cache.markDirty(active.id);
       }
     }
     active.lastEditedTime = Date.now();
@@ -4272,7 +4276,7 @@ addNotepadTab(name, opts) =>
   let data = getNotebookDataForScope(scope);
   let id = `tab_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
   let title = name || `Page ${data.tabs.length + 1}`;
-  let tab = {id, title, content:opts?.content??"", lastEditedTime:Date.now()};
+  let tab = {id, title, content:opts?.content??"", lastEditedTime:Date.now(), scope};
   data.tabs.push(tab);
   if (isNotepadOpen) data.activeTabId = id;
   setNotebookDataForScope(scope, data);
@@ -4317,12 +4321,13 @@ deleteActiveNotepadTab() =>
   if(typeof notepadTabMenu !== "undefined") notepadTabMenu.hidden = true;
   if(data.tabs.length <= 6) {
     let id = `tab_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
-    data.tabs = [{id, title:"Page 1", content:"", lastEditedTime:Date.now()}];
+    data.tabs = [{id, title:"Page 1", content:"", lastEditedTime:Date.now(), scope}];
     data.activeTabId = id;
   } else {
     data.activeTabId = data.tabs[0].id;
   }
   setNotebookDataForScope(scope, data);
+  plugins.cache.unloadEntryById(active.id, true);
   renderNotepadTabs();
   if(scope === "app") requestAppNotebookSaveDebounced({debounceMs:400});
   else requestSaveCurrentStory({debounceMs:400});
@@ -4382,15 +4387,122 @@ plugins
   publicApi
     list = [this.getParent.list]
     getEnabled = [this.getParent.getEnabled]
+  cache
+    get() =>
+      if (!window.pluginCache) window.pluginCache = new Map();
+      return window.pluginCache;
+    init() =>
+      this.markScopeDirty("story");
+      this.markScopeDirty("app");
+    markScopeDirty(scope) =>
+      const tabs = getNotebookDataForScope(scope)?.tabs;
+      if (codeDebug) console.log(`plugins.cache.markScopeDirty : ${scope} :`, tabs);
+      tabs?.forEach(tab => this.markDirty(tab.id));
+    markDirty(tabId, dirty) =>
+      if (!window.pluginCacheDirtyMap) window.pluginCacheDirtyMap = new Map();
+      if (dirty ?? true) {
+        window.pluginCacheDirtyMap.set(tabId, true);
+      } else {
+        window.pluginCacheDirtyMap.delete(tabId);
+      }
+    hasDirty() =>
+      return !window.pluginCacheDirtyMap || window.pluginCacheDirtyMap.size > 0;
+    isDirty(tabId) =>
+      return !window.pluginCacheDirtyMap || window.pluginCacheDirtyMap.get(tabId);
+    updateAll(force) =>
+      if (isNotepadPanelOpen()) {
+        saveNotepadEditorToActiveTab();
+      }
+      if (!force && !this.hasDirty()) return;
+      const tabs = [
+        ...getNotebookDataForScope("story").tabs,
+        ...getNotebookDataForScope("app").tabs,
+      ];
+      const activeTabIds = new Set();
+      for (const tab of tabs) {
+        activeTabIds.add(tab.id);
+        if (force || this.isDirty(tab.id)) {
+          this.updateFromTab(tab);
+        }
+      }
+      // Unload plugins for deleted tabs.
+      [...this.get().values().filter(entry => !activeTabIds.has(entry.sourceId))].forEach(entry => this.unloadEntry(entry, true));
+    updateFromTab(tab) =>
+      if (isPerchanceCode(tab.content)) {
+        // Deinitialize old version, if needed.
+        const oldEntry = this.get().get(tab.id);
+        this.deinitialize(oldEntry);
+        // Load and initialize.
+        const entry = this.loadFromTab(tab);
+        if (entry) {
+          console.log(`plugins.cache.updateFromTab : ${tab.title} :`, entry);
+          this.get().set(tab.id, entry);
+          this.initialize(entry);
+        }
+      }
+      this.markDirty(tab.id, false);
+    loadFromTab(tab) =>
+      try {
+        const root = createPerchanceTree(tab.content);
+        let entryExtras = {};
+        const instance = root.selectOne;
+        if (instance.isPlugin || instance.IsPlugin) {
+          entryExtras = {
+            isPlugin: true,
+            initialized: false,
+            instance,
+          };
+        }
+        return {
+          sourceId: tab.id,
+          root,
+          scope: tab.scope,
+          ...entryExtras
+        };
+      } catch (e) {
+        console.error(`Failed to create Perchance tree for tab:`, tab, e);
+      }
+    unloadScope(scope) =>
+      const entries = [...this.get().values().filter(entry => entry.scope == scope)];
+      if (codeDebug) console.log(`plugins.cache.unloadScope : ${scope} :`, entries);
+      entries.forEach(entry => this.unloadEntry(entry));
+    unloadEntryById(tabId) =>
+      const entry = this.get().get(tabId);
+      if (entry) this.unloadEntry(entry);
+    unloadEntry(entry) =>
+      if (codeDebug) console.log("plugins.cache.unloadEntry : entry :", entry);
+      this.deinitialize(entry);
+      this.get().delete(entry.sourceId);
+      // Clear the dirty flag to prevent the ids from hanging around.
+      this.markDirty(entry.sourceId, false);
+    initialize(entry) =>
+      if (!entry.instance) return;
+      const plugin = entry.instance;
+      // Make sure metadata properties are configured.
+      plugin.isPlugin = true;
+      plugin.enabled = plugin.enabled ?? plugin.Enabled ?? true;
+      plugin.name = plugin.name ?? plugin.Name;
+      plugin.apiVersion = plugin.apiVersion ?? plugin.ApiVersion;
+      plugin.shortcutLists = plugin.shortcutLists ?? plugin.ShortcutLists;
+      // Run initialization.
+      if (plugin.enabled) {
+        // TODO: Wrap in a try/catch with UI to display failure to initialize.
+        plugin.init?.(plugins.getApiObject());
+        entry.initialized = true;
+      }
+    deinitialize(entry) =>
+      if (!entry || !entry.instance || !entry.initialized) return;
+      const plugin = entry.instance;
+      // TODO: Wrap in a try/catch with UI to display failure to deinitialize.
+      plugin.deinit?.();
+      entry.initialized = false;
   list(opts) =>
     // Note: This function does not reinitialize plugins if they're dirty. This is makes it safe for plugins to use.
     const plugins = [];
-    return this.pluginCache.forEach(tree => {
-      if (tree.selectOne.isPlugin) {
-        const plugin = tree.selectOne;
-        if (opts?.enabled && !plugin.enabled) return;
-        plugins.push(plugin);
-      }
+    return this.cache.get().values().forEach(entry => {
+      if (!entry.instance) return;
+      if (opts?.enabled && !entry.instance.enabled) return;
+      plugins.push(entry.instance);
     });
   getEnabled() =>
     return this.list({enabled:true});
@@ -4399,7 +4511,8 @@ plugins
       notepad: notepadApi,
       plugins: plugins.publicApi,
       story: storyApi,
-      // This will give raw access to this generator. I'm not going to document this, but it's here for anyone technical enough to use it. If you're reading this, that includes you. :)
+      // This will give raw access to this generator. I'm not going to document this, but it's here for anyone technical enough to use it.
+      // If you're reading this, that includes you. :)
       _window: window,
     };
   broadcast(name, ...args) =>
@@ -4425,88 +4538,31 @@ plugins
       });
     });
     return results;
+  onStorySwitched(data) =>
+    this.cache.unloadScope("story");
+    this.broadcast("storyLoaded", data);
+    this.cache.markScopeDirty("story");
 
 isPerchanceCode(content) =>
   return content.match(/^(##PerchanceCode##|\/\/##PerchanceCode##\/\/)\n/);
 
 getPerchanceTreesFromAllNotebookData() =>
-  if (!window.pluginCacheDirty && window.pluginCache) {
-    return window.pluginCache;
+  if (plugins.cache.hasDirty()) {
+    plugins.cache.updateAll();
   }
 
-  if (window.pluginCache) {
-    window.pluginCache.forEach(tree => {
-      const possiblePlugin = tree.selectOne;
-      if (possiblePlugin.isPlugin && possiblePlugin._isInitialized) {
-        deinitializePlugin(possiblePlugin);
-        possiblePlugin._isInitialized = false;
-      }
-    });
-  }
-
-  if (isNotepadPanelOpen()) {
-    saveNotepadEditorToActiveTab();
-  }
-
-  const tabs = [
-    ...getNotebookDataForScope("story").tabs,
-    ...getNotebookDataForScope("app").tabs,
-  ];
-  const trees = [];
-  for (const tab of tabs) {
-    let content = tab.content;
-    const match = isPerchanceCode(content);
-    if (match) {
-      try {
-        //console.log("getPerchanceTreesFromAllNotebookData : content :", content)
-        trees.push(createPerchanceTree(content.slice(match[0].length)));
-      } catch (e) {
-        console.error(`Failed to create Perchance tree for tab: ${tab.title}`, e);
-      }
-    }
-  }
-  console.log("getPerchanceTreesFromAllNotebookData :", trees)
-  window.pluginCache = trees;
-  window.pluginCacheDirty = false;
-
-  trees.forEach(tree => {
-    const possiblePlugin = tree.selectOne;
-    if (possiblePlugin.isPlugin || possiblePlugin.IsPlugin) {
-      initializePlugin(possiblePlugin);
-    }
-  });
-
-  return trees;
-
-initializePlugin(plugin) =>
-  // Make sure metadata properties are configured.
-  plugin.isPlugin = true;
-  plugin.enabled = plugin.enabled ?? plugin.Enabled ?? true;
-  plugin.name = plugin.name ?? plugin.Name;
-  plugin.apiVersion = plugin.apiVersion ?? plugin.ApiVersion;
-  plugin.shortcutLists = plugin.shortcutLists ?? plugin.ShortcutLists;
-  // Run initialization.
-  if (plugin.enabled) {
-    // TODO: Wrap in a try/catch with UI to display failure to initialize.
-    plugin.init?.(plugins.getApiObject());
-    plugin._isInitialized = true;
-  }
-
-deinitializePlugin(plugin) =>
-  // TODO: Wrap in a try/catch with UI to display failure to deinitialize.
-  plugin.deinit?.();
+  return plugins.cache.get();
 
 getNotebookPlugins() =>
-  return getPerchanceTreesFromAllNotebookData().filter(tree => tree.selectOne.isPlugin).map(tree => tree.selectOne);
+  return getPerchanceTreesFromAllNotebookData().values().filter(entry => entry.isPlugin).map(entry => entry.instance);
 
 getNotebookShortcutTrees() =>
   const trees = [];
-  getPerchanceTreesFromAllNotebookData().forEach(tree => {
-    const potentialPlugin = tree.selectOne;
-    if (potentialPlugin.isPlugin && potentialPlugin.shortcutLists) {
-      trees.push(potentialPlugin.shortcutLists)
+  getPerchanceTreesFromAllNotebookData().values().forEach(entry => {
+    if (entry.isPlugin && entry.instance.shortcutLists) {
+      trees.push(entry.instance.shortcutLists)
     } else {
-      trees.push(tree);
+      trees.push(entry.root);
     }
   });
   return trees;
