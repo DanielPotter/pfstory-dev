@@ -1,3 +1,7 @@
+## 2026.06.27 (DanielPotter)
+Fix:
+- Swapped the text editor from `pftexteditor` to `text-editor-plugin-v1` so that Markdown isn't rendered inline. Markdown format decorators (`*`, `>`, `#`, etc.) are no longer hidden. Inline rendering is cool and may return, but it would be optional.
+
 ## 2026.06.25 (DanielPotter)
 Enhancements:
 - Revamped plugin management so that plugins are only reloaded when they are edited. Previously, all plugins would be reloaded if any were modified.

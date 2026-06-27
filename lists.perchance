@@ -13,7 +13,9 @@ upload = {import:upload-plugin} // <-- for the share link feature
 kv = {import:kv-plugin} // <-- for story storage + auto-backups (indexeddb)
 prompt2 = {import:prompt2-plugin} // for "modal" popup, used for the shortcuts feature
 favicon = {import:favicon-plugin} // <-- for the icon in the browser tab
-createTextEditor = {import:pftexteditor} // a higher-performance version of <textarea> that also supports text styling (e.g. text within asterisks can be italicized)
+createTextEditor = {import:text-editor-plugin-v1} // a higher-performance version of <textarea> that also supports text styling (e.g. text within asterisks can be italicized)
+// TODO: Allow users to use pftexteditor if they want.
+//createRenderedTextEditor = {import:pftexteditor} // another version of the text editor that renders Markdown
 icon = {import:fa-icon-plugin}
 generateImage = {import:text-to-image-plugin}
 roll = {import:dice-plugin} // Added to assist in story progression
