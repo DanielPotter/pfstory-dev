@@ -81,10 +81,10 @@ getStoryPrefixData(source) =>
 
   if (genre !== "default" && genre !== "") {
     // If it's custom, use the string directly. If not, look it up in instructions.
-    let genreData = (storyGenreSelectEl.value === 'custom') ? genre : genreInstructions[genre];
+    let genreData = (storyGenreSelectEl.value === 'custom') ? genre : storyGenres.getInstruction(genre);
     if (genreData) {lines.push(`Focus the genre on ${genreData}.`);}
     if (subGenre !== "default" && subGenre !== "") {
-      let subGenreData = (storySubGenreSelectEl.value === 'custom') ? subGenre : genreInstructions[subGenre];
+      let subGenreData = (storySubGenreSelectEl.value === 'custom') ? subGenre : storyGenres.getInstruction(subGenre);
       if (subGenreData) {
         lines.push(`Also incorporate elements of ${subGenreData}.`);
       }
@@ -98,8 +98,8 @@ getStoryPrefixData(source) =>
       console.log("found custom" + storyWritingStyleCustomInputEl.value);
       styleData = storyWritingStyleCustomInputEl.value;
     } else {
-      console.log("did not found custom");
-      styleData = styleInstructions[style];
+      console.log("did not find custom writing style");
+      styleData = writingStyles.getInstruction(style);
     }
     console.log("styleData: " + styleData);
     lines.push(`Do not use a local/learned writing style based on the 'STORY SO FAR', instead, follow this style: ${styleData}.`)
@@ -4998,6 +4998,356 @@ closeThemeModal(opts) =>
   try { if(typeof fontHelpTooltip !== "undefined") fontHelpTooltip.hidden = true; } catch(e) {}
   themeModalEl.hidden = true;
 
+//////////////
+// Settings //
+//////////////
+
+settings
+  createDefinition(id, opts) =>
+    return {
+      id,
+      scope: opts.scope || "app",
+      size: opts.size || "half",
+      type: opts.type || "text",
+      ...opts
+    };
+  getDefinitions() =>
+    return [
+      this.createDefinition("storyPerspective", {
+        localStorageKey: "storyPerspective",
+        scope: "story",
+        title: "Perspective",
+        type: "select",
+        default: "second",
+        options: [
+          {
+            value: "first",
+            label: "First Person (I, me, my)",
+          },
+          {
+            value: "second",
+            label: "Second Person (you, your)",
+          },
+          {
+            value: "third",
+            label: "Third Person (he, she, they)",
+          },
+        ],
+      }),
+      this.createDefinition("difficultyMode", {
+        localStorageKey: "difficultyMode",
+        scope: "story",
+        title: "Difficulty",
+        type: "select",
+        default: "",
+        options: [
+          {
+            value: "",
+            label: "🌱 Default",
+          },
+          {
+            value: "realistic",
+            label: "⚖️ Realistic",
+          },
+          {
+            value: "hard",
+            label: "🪖 Hard",
+          },
+          {
+            value: "impossible",
+            label: "☠️ Ultra Hard",
+          },
+          {
+            value: "free",
+            label: "🪁 Freeform",
+          },
+        ],
+      }),
+      this.createDefinition("storyWritingStyle", {
+        localStorageKey: "storyWritingStyleSelect",
+        scope: "story",
+        title: Writing Style,
+        type: "select",
+        default: "default",
+        options: writingStyles.selectAll.map(style => {
+          return { value: style.getName, label: style.label };
+        }),
+        helpContent: `<div style="text-align: left;">${writingStyles.selectAll.filter(style => style.tooltip).map(style => `<strong>${style.label}:</strong> ${style.tooltip}`).join("<br>")}</div>`,
+      }),
+      this.createDefinition("storyWritingLength", {
+        localStorageKey: "storyWritingLength",
+        scope: "story",
+        title: "Writing Length",
+        type: "select",
+        default: "1",
+        options: [
+          { value: "1", label: "1 Paragraph" },
+          { value: "2", label: "2 Paragraphs" },
+          { value: "3", label: "3 Paragraphs" },
+          { value: "4", label: "4 Paragraphs" },
+          { value: "5", label: "5 Paragraphs" },
+        ],
+      }),
+      this.createDefinition("storyWritingStyleCustomInstruction", {
+        scope: "story",
+        title: "Custom Writing Style Instruction",
+        placeholder: "maximum 3 sentences",
+        size: "full",
+        conditions: [{
+          settings: ["storyWritingStyle"],
+          isVisible: (settings) => settings.storyWritingStyle == "custom",
+        }],
+      }),
+      this.createDefinition("storyWritingStyleCustomDescription", {
+        scope: "story",
+        title: "Custom Writing Style Description",
+        placeholder: "unpredictable, absurd, surprising",
+        size: "full",
+        conditions: [{
+          settings: ["storyWritingStyle"],
+          isVisible: (settings) => settings.storyWritingStyle == "custom",
+        }],
+      }),
+      this.createDefinition("storyGenre", {
+        localStorageKey: "storyGenreSelect",
+        scope: "story",
+        title: "Genre",
+        type: "select",
+        default: "default",
+        options: storyGenres.selectAll.map(genre => {
+          return { value: genre.getName, label: genre.label };
+        }),
+      }),
+      this.createDefinition("storySubGenre", {
+        localStorageKey: "storySubGenreSelect",
+        scope: "story",
+        title: "Sub-Genre",
+        type: "select",
+        default: "default",
+        options: storyGenres.selectAll.map(genre => {
+          return { value: genre.getName, label: genre.label };
+        }),
+      }),
+      this.createDefinition("storyWritingStyleCustomInstruction", {
+        scope: "story",
+        title: "Custom Genre Description",
+        placeholder: "Brief description of custom genre",
+        size: "full",
+        conditions: [{
+          settings: ["storyGenre"],
+          isVisible: (settings) => settings.storyGenre == "custom",
+        }],
+      }),
+      this.createDefinition("storyWritingStyleCustomDescription", {
+        scope: "story",
+        title: "Custom Sub-Genre Description",
+        placeholder: "Brief description of custom sub-genre",
+        size: "full",
+        conditions: [{
+          settings: ["storySubGenre"],
+          isVisible: (settings) => settings.storySubGenre == "custom",
+        }],
+      }),
+      this.createDefinition("storyGameMode", {
+        localStorageKey: "gameMode",
+        scope: "story",
+        title: "Game Mode",
+        type: "select",
+        default: "",
+        options: [
+          { value: "", label: "📖 Story" },
+          { value: "game", label: "🎲 Game" },
+        ],
+        onChange: () => updateButtonsDisplay(),
+      }),
+      this.createDefinition("storyDice", {
+        localStorageKey: "storyDiceEnabled",
+        scope: "story",
+        title: "Dice Roll",
+        label: "Enable Dice Rolls",
+        description: "Adds a challenge to the story/game.",
+        type: "checkbox",
+        default: false,
+      }),
+      this.createDefinition("storyNamingConvention", {
+        localStorageKey: "storyNamingConventionSelect",
+        scope: "story",
+        title: "Naming Conventions",
+        type: "select",
+        options: [
+          { value: "", label: "Default" },
+          { value: "aztec", label: "Aztec" },
+          { value: "celtic", label: "Celtic" },
+          { value: "chinese", label: "Chinese" },
+          { value: "dutch", label: "Dutch" },
+          { value: "egyptian", label: "Egyptian" },
+          { value: "english", label: "English" },
+          { value: "french", label: "French" },
+          { value: "german", label: "German" },
+          { value: "greek", label: "Greek" },
+          { value: "indian", label: "Indian" },
+          { value: "irish", label: "Irish" },
+          { value: "italian", label: "Italian" },
+          { value: "japanese", label: "Japanese" },
+          { value: "korean", label: "Korean" },
+          { value: "mayan", label: "Mayan" },
+          { value: "norse", label: "Norse" },
+          { value: "polish", label: "Polish" },
+          { value: "portuguese", label: "Portuguese" },
+          { value: "roman", label: "Roman" },
+          { value: "scottish", label: "Scottish" },
+          { value: "spanish", label: "Spanish" },
+          { value: "swedish", label: "Swedish" },
+        ],
+      }),
+      this.createDefinition("storyDashes", {
+        localStorageKey: "storyDashesEnabled",
+        scope: "story",
+        title: "Formatting",
+        label: "Allow —/– dashes",
+        description: "This will allow Em/En dashes in the story.",
+        type: "checkbox",
+        default: false,
+      }),
+      this.createDefinition("saveFileTimestamp", {
+        localStorageKey: "saveFileTimestamp",
+        scope: "app",
+        title: "Save File Timestamp",
+        label: "Disable Timestamp",
+        description: "Removes timestamp from save file names",
+        type: "checkbox",
+        default: false,
+      }),
+      this.createDefinition("saveFileSuffix", {
+        localStorageKey: "saveFileSuffix",
+        scope: "app",
+        title: "Save File Suffix",
+        description: "Example: StoryName.pfstory.json",
+      }),
+      this.createDefinition("welcomeReset", {
+        scope: "app",
+        label: "Reset Welcome Prompt",
+        type: "button",
+        onClick() {
+          delete localStorage.welcomeComplete;
+          settings.refresh(this.id);
+        },
+        conditions: [{
+          isVisible: () => localStorage.welcomeComplete,
+        }],
+      })
+    ];
+  onChange(settingId, info) =>
+    if (info.setting.localStorageKey) {
+      localStorage[info.setting.localStorageKey] = info.value;
+    }
+  rendering
+    render(containerEl) =>
+      container.innerHTML = '';
+      const addSetting = (settingDef) => {
+        let isFirstInRow = false;
+        // Determine whether we need to start a new row.
+        if (currentRow) {
+          if (settingDef.size == "full" && !isSectionHalf) {
+            currentRow = null;
+          }
+        }
+
+        if (!currentRow) {
+          currentRow = document.createElement("div");
+          if (settingDef.size == "full") {
+            currentRow.classList.add("modalSection");
+            isSectionHalf = false;
+          } else {
+            currentRow.classList.add("modalRow");
+            currentRow.classList.add("modalSectionRow");
+            isSectionHalf = true;
+          }
+          containerEl.appendChild(currentRow);
+          isFirstInRow = true;
+        }
+
+        this.renderSetting()
+
+        if (isSectionHalf && currentRow.children.length >= 2) {
+          currentRow = null;
+        }
+      };
+      let currentRow = null;
+      let isSectionHalf = false;
+      const allDefinitions = settings.getDefinitions();
+      const storySettingDefs = allDefinitions.filter(def => def.scope != "app");
+      const appSettingDefs = allDefinitions.filter(def => def.scope == "app");
+      containerEl.appendChild(this.createHeaderElement("Story Settings"));
+      storySettingDefs.forEach(settingDef);
+      containerEl.appendChild(this.createHeaderElement("Global Settings"));
+      appSettingDefs.forEach(settingDef);
+    createHeaderElement(title) =>
+      const headerEl = document.createElement("div");
+      headerEl.classList.add("modalHeader");
+
+      const rowEl = document.createElement("div");
+      rowEl.classList.add("storySettingsModalTitleRow");
+      headerEl.innerText = title;
+      headerEl.appendChild(rowEl);
+
+      return headerEl;
+    createSettingElement(settingDef) =>
+      switch(settingDef.type) {
+        case "checkbox":
+          const labelEl = document.createElement("label");
+          labelEl.innerText = settingDef.label;
+          const inputEl = document.createElement("input");
+          inputEl.type = "checkbox";
+          if (settingDef.localStorageKey) {
+            selectEl.value = !!localStorage[settingDef.localStorageKey];
+          }
+          labelEl.appendChild(inputEl);
+          return labelEl;
+        case "select":
+          const selectEl = document.createElement("select");
+          selectEl.style.flex = "1";
+          if (settingDef.localStorageKey) {
+            selectEl.value = localStorage[settingDef.localStorageKey] || "";
+          }
+          selectEl.onchange = () => settings.onChange(settingDef.id, {element: selectEl, value: selectEl.value, settingDef});
+          settingDef.options.forEach(option => {
+            const optionEl = document.createElement("option");
+            optionEl.value = option.value;
+            optionEl.innerText = option.label;
+            selectEl.appendChild(optionEl);
+          });
+          return selectEl;
+        case "text":
+          const textInputEl = document.createElement("input");
+          if (settingDef.placeholder) {
+            textInputEl.placeholder = settingDef.placeholder;
+          }
+          if (settingDef.localStorageKey) {
+            textInputEl.value = localStorage[settingDef.localStorageKey] || "";
+          }
+          textInputEl.onchange = () => settings.onChange(settingDef.id, {element: textInputEl, value: textInputEl.value, settingDef});
+          return textInputEl;
+      }
+    createSectionHalf(opts) =>
+      const sectionEl = document.createElement("div");
+      sectionEl.classList.add("modalSection");
+      sectionEl.classList.add("modalSectionHalf");
+      if (opts?.title) {
+        sectionEl.appendChild(this.createSectionTitle(opts.title));
+      }
+      return sectionEl;
+    createSectionTitle(title) =>
+      const titleEl = document.createElement("div");
+      titleEl.classList.add("modalSectionTitle");
+      titleEl.innerText = "title";
+      return titleEl;
+    createInlineRow() =>
+      const rowEl = document.createElement("div");
+      rowEl.classList.add("modalRow");
+      rowEl.classList.add("themeInlineRow");
+      return rowEl;
+
 openStorySettingsModal() =>
   if(typeof storySettingsModalEl === "undefined") return;
   ensureThemeSchemeListeners();
@@ -5019,6 +5369,10 @@ closeStorySettingsModal(opts) =>
   }
   try { if(typeof fontHelpTooltip !== "undefined") fontHelpTooltip.hidden = true; } catch(e) {}
   storySettingsModalEl.hidden = true;
+
+////////////
+// Themes //
+////////////
 
 normalizeColorScheme(scheme) =>
   return (scheme === "dark") ? "dark" : "light";
@@ -6351,129 +6705,178 @@ runObserver
 
 // Writing Style & Genre Lists
 
-storyGenres() => 
-  return [
-    ["default", "None"],
-    ["custom", "Custom"],
-    ["adventure", "Adventure"],
-    ["comedy", "Comedy"],
-    ["contemporary", "Contemporary"],
-    ["cyberpunk", "Cyberpunk"],
-    ["dark_fantasy", "Dark Fantasy"],
-    ["dystopian", "Dystopian"],
-    ["erotica", "Erotica"],
-    ["fantasy", "Fantasy"],
-    ["historical_fiction", "Historical Fiction"],
-    ["horror", "Horror"],
-    ["magic_real", "Magical Realism"],
-    ["mystery", "Mystery"],
-    ["noir", "Noir"],
-    ["political", "Political"],
-    ["post_apocalyptic", "Post-Apocalyptic"],
-    ["romance", "Romance"],
-    ["sci_fi", "Sci-Fi"],
-    ["self_help", "Self-Help"],
-    ["slice_of_life", "Slice of Life"],
-    ["spy", "Spy"],
-    ["steampunk", "Steampunk"],
-    ["superhero", "Superhero"],
-    ["thriller", "Thriller"],
-    ["war", "War"],
-    ["western", "Western"]    
-  ];
-
 populateGenres(selectEl) =>
-  genres = storyGenres();
-  selectEl.innerHTML = genres
-    .map(([value, label]) =>
-      `<option value="${value}" ${value === "default" ? "selected" : ""}>${label}</option>`
+  selectEl.innerHTML = storyGenres.getSorted()
+    .map(genre =>
+      `<option value="${genre.getName}" ${genre.getName === "default" ? "selected" : ""}>${genre.label}</option>`
     )
     .join("");
 
-genreInstructions
+storyGenres
+  getSorted() =>
+    return [
+      "default",
+      "custom",
+      ...this.selectAll.map(x => x.getName).filter(x => x !== "default" && x !== "custom").sort(),
+    ].map(x => this[x]);
+  getInstruction(genre) =>
+    const genreInfo = this[style] ?? this.default;
+    if (!genreInfo.instruction) return "";
+    return `- **Genre: ${genreInfo.label}.** ${genreInfo.instruction}`;
   default
+    label = None
+  custom
+    label = Custom
   fantasy
-    - **Genre: Fantasy.** Weave in elements of magic, unique mythical creatures, and fantastical worlds. Build a rich world with its own history and rules. Magic should feel wondrous and mysterious. 
+    label = Fantasy
+    instruction = Weave in elements of magic, unique mythical creatures, and fantastical worlds. Build a rich world with its own history and rules. Magic should feel wondrous and mysterious.
   dark_fantasy
-    - **Genre: Dark Fantasy.** Blend fantasy with elements of horror. The world should be grim, morally ambiguous, and dangerous. Magic should have a high cost. Characters should face difficult choices and consequences.
+    label = Dark Fantasy
+    instruction = Blend fantasy with elements of horror. The world should be grim, morally ambiguous, and dangerous. Magic should have a high cost. Characters should face difficult choices and consequences.
   sci_fi
-    - **Genre: Sci-Fi.** Explore futuristic concepts, advanced technology, space exploration, or extraterrestrial life. Ground the story in scientific principles, even if they are speculative.
+    label = Sci-Fi
+    instruction = Explore futuristic concepts, advanced technology, space exploration, or extraterrestrial life. Ground the story in scientific principles, even if they are speculative.
   noir
-    - **Genre: Noir.** Adopt a cynical, hardboiled tone. The protagonist should be a flawed anti-hero. The setting is typically a dark, corrupt city. Use sharp, cynical dialogue. The plot often involves crime and moral ambiguity.
+    label = Noir
+    instruction = Adopt a cynical, hardboiled tone. The protagonist should be a flawed anti-hero. The setting is typically a dark, corrupt city. Use sharp, cynical dialogue. The plot often involves crime and moral ambiguity.
   mystery
-    - **Genre: Mystery.** Center the plot around a puzzle or crime to be solved. Drop clues and red herrings. Build suspense and lead to a satisfying revelation. 
+    label = Mystery
+    instruction = Center the plot around a puzzle or crime to be solved. Drop clues and red herrings. Build suspense and lead to a satisfying revelation.
   thriller
-    - **Genre: Thriller.** Focus on creating suspense, excitement, and anticipation. The stakes should be high, often with a race against time. The protagonist should face significant obstacles.
+    label = Thriller
+    instruction = Focus on creating suspense, excitement, and anticipation. The stakes should be high, often with a race against time. The protagonist should face significant obstacles.
   horror
-    - **Genre: Horror.** Aim to evoke fear, dread, and terror. Use atmosphere, psychological tension, and unsettling imagery meant to terrify or scare the reader.
+    label = Horror
+    instruction = Aim to evoke fear, dread, and terror. Use atmosphere, psychological tension, and unsettling imagery meant to terrify or scare the reader.
   contemporary
-    - **Genre: Contemporary.** Set the story in the present day. The conflicts and themes should be relatable to a modern audience. Focus on realistic characters and situations.
+    label = Contemporary
+    instruction = Set the story in the present day. The conflicts and themes should be relatable to a modern audience. Focus on realistic characters and situations.
   slice_of_life
-    - **Genre: Slice of Life.** Focus on small, everyday moments in characters' lives. The narrative should emphasize ordinary experiences, subtle emotions, and realistic interactions. The story must remain grounded in normal daily life. Do NOT introduce major conflicts, conspiracies, villains, mysteries, or large-scale explanations. If something unusual or inconvenient occurs, treat it as a minor personal problem rather than a larger plot. Characters should react in practical, mundane ways instead of investigating or uncovering hidden causes.
+    label = Slice of Life
+    instruction = Focus on small, everyday moments in characters' lives. The narrative should emphasize ordinary experiences, subtle emotions, and realistic interactions. The story must remain grounded in normal daily life. Do NOT introduce major conflicts, conspiracies, villains, mysteries, or large-scale explanations. If something unusual or inconvenient occurs, treat it as a minor personal problem rather than a larger plot. Characters should react in practical, mundane ways instead of investigating or uncovering hidden causes.
   romance
-    - **Genre: Romance.** The central plot must revolve around the development of a romantic relationship between characters. Ensure emotional depth and a satisfying romantic arc. 
+    label = Romance
+    instruction = The central plot must revolve around the development of a romantic relationship between characters. Ensure emotional depth and a satisfying romantic arc.
   self_help
-    - **Genre: Self-Help.** The narrative should be structured to provide guidance or inspiration to the reader, often through a character's journey of personal growth and overcoming obstacles. The tone should be positive and encouraging. 
+    label = Self-Help
+    instruction = The narrative should be structured to provide guidance or inspiration to the reader, often through a character's journey of personal growth and overcoming obstacles. The tone should be positive and encouraging.
   historical_fiction
-    - **Genre: Historical Fiction.** Set the story in a recognizable period of history. Pay close attention to historical accuracy in setting, customs, and events, while weaving a fictional narrative. 
+    label = Historical Fiction
+    instruction = Set the story in a recognizable period of history. Pay close attention to historical accuracy in setting, customs, and events, while weaving a fictional narrative.  
   dystopian
-    - **Genre: Dystopian.** Set the story in a future society that is deeply flawed, often oppressive or post-apocalyptic. Explore themes of societal control, rebellion, and the human condition. 
+    label = Dystopian
+    instruction = Set the story in a future society that is deeply flawed, often oppressive or post-apocalyptic. Explore themes of societal control, rebellion, and the human condition.
   cyberpunk
-    - **Genre: Cyberpunk.** Set the story in a high-tech, low-life future. Focus on themes of corporate control, cybernetics, and the fusion of man and machine. The setting should be gritty and neon-lit. 
+    label = Cyberpunk
+    instruction =  Set the story in a high-tech, low-life future. Focus on themes of corporate control, cybernetics, and the fusion of man and machine. The setting should be gritty and neon-lit.
   steampunk
-    - **Genre: Steampunk.** Set the story in a world where steam power and clockwork technology dominate, often in a Victorian or Wild West aesthetic. Include airships, clockwork automatons, and steam-powered machinery.
+    label = Steampunk
+    instruction = Set the story in a world where steam power and clockwork technology dominate, often in a Victorian or Wild West aesthetic. Include airships, clockwork automatons, and steam-powered machinery.
   political
-    - **Genre: Political.** Focus on the workings of government, political systems, or political intrigue. Explore themes of power, corruption, and ideology. The plot often involves intrigue, double-crosses, and high-stakes missions. 
+    label = Political
+    instruction = Focus on the workings of government, political systems, or political intrigue. Explore themes of power, corruption, and ideology. The plot often involves intrigue, double-crosses, and high-stakes missions.
   comedy
-    - **Genre: Comedy.** The primary goal is to make the reader laugh. Use humor, wit, and absurdity. The plot can be lighthearted or satirical. Characters may be exaggerated or quirky. 
+    label = Comedy
+    instruction = The primary goal is to make the reader laugh. Use humor, wit, and absurdity. The plot can be lighthearted or satirical. Characters may be exaggerated or quirky.
   adventure
-    - **Genre: Adventure.** Focus on a journey or quest. The protagonist should face physical challenges and obstacles. The tone is often exciting and fast-paced, with a focus on action and exploration. 
+    label = Adventure
+    instruction = Focus on a journey or quest. The protagonist should face physical challenges and obstacles. The tone is often exciting and fast-paced, with a focus on action and exploration.
   western
-    - **Genre: Western.** Set the story in the American Old West. Include elements like cowboys, outlaws, frontier towns, and the struggle for survival. The tone is often rugged and adventurous. 
+    label = Western
+    instruction = Set the story in the American Old West. Include elements like cowboys, outlaws, frontier towns, and the struggle for survival. The tone is often rugged and adventurous.
   post_apocalyptic
-    - **Genre: Post-Apocalyptic.** Set the story in a world after a catastrophic event. Focus on survival, the collapse of society, and the struggle to rebuild. The tone is often bleak and desperate. 
+    label = Post-Apocalyptic
+    instruction = Set the story in a world after a catastrophic event. Focus on survival, the collapse of society, and the struggle to rebuild. The tone is often bleak and desperate.
   war
-    - **Genre: War.** Set the story during a time of armed conflict. Focus on the experiences of soldiers and civilians. Explore themes of courage, sacrifice, and the horrors of war.
+    label = War
+    instruction = Set the story during a time of armed conflict. Focus on the experiences of soldiers and civilians. Explore themes of courage, sacrifice, and the horrors of war.
   spy
-    - **Genre: Spy.** Focus on espionage, secret agents, and covert operations. The plot often involves intrigue, double-crosses, and high-stakes missions. The tone is often fast-paced and suspenseful. 
+    label = Spy
+    instruction = Focus on espionage, secret agents, and covert operations. The plot often involves intrigue, double-crosses, and high-stakes missions. The tone is often fast-paced and suspenseful.
   superhero
-    - **Genre: Superhero.** Focus on characters with superhuman abilities who use them to fight crime or protect the world, and villains who use their powers for evil or personal gain, sometimes for understandable or relatable reasons. Explore themes of power, responsibility, and morality. The tone is often action-packed and dramatic.
+    label = Superhero
+    instruction = Focus on characters with superhuman abilities who use them to fight crime or protect the world, and villains who use their powers for evil or personal gain, sometimes for understandable or relatable reasons. Explore themes of power, responsibility, and morality. The tone is often action-packed and dramatic.
   magic_real
-    - **Magical Realism.** Weave in subtle, unexplained magical elements that exist naturally within an otherwise realistic world. Treat the extraordinary as ordinary—characters should accept strange phenomena without question. Focus on atmosphere, emotion, and quiet wonder rather than rules or systems. Avoid structured magic or traditional fantasy tropes.
+    label = Magical Realism
+    instruction = Weave in subtle, unexplained magical elements that exist naturally within an otherwise realistic world. Treat the extraordinary as ordinary—characters should accept strange phenomena without question. Focus on atmosphere, emotion, and quiet wonder rather than rules or systems. Avoid structured magic or traditional fantasy tropes.
   erotica
-    - **Erotica.** Focus on intimate, emotionally charged connections between characters, emphasizing desire, tension, and sensory detail. Build atmosphere through subtle gestures, lingering looks, and internal thoughts, allowing attraction and chemistry to unfold naturally. Keep the tone evocative and immersive, prioritizing mood and character dynamics over explicit detail.
+    label = Erotica
+    instruction = Focus on intimate, emotionally charged connections between characters, emphasizing desire, tension, and sensory detail. Build atmosphere through subtle gestures, lingering looks, and internal thoughts, allowing attraction and chemistry to unfold naturally. Keep the tone evocative and immersive, prioritizing mood and character dynamics over explicit detail.
 
-styleInstructions
+writingStyles
+  getSorted() =>
+    return [
+      "default",
+      "custom",
+      ...this.selectAll.map(x => x.getName).filter(x => x !== "default" && x !== "custom").sort(),
+    ].map(x => this[x]);
+  getInstruction(style) =>
+    const styleInfo = this[style] ?? this.default;
+    return `- **Writing Style: ${styleInfo.name || styleInfo.label}.** ${styleInfo.instruction}`;
   default
-    - **Writing Style: Novel Style (Default).** Use a clear, balanced, and engaging novelistic style. Vary sentence structure and length. Avoid overly complex or overly simple prose. Focus on strong storytelling and clear narration.
+    label = Novel Style (Default)
+    instruction = Use a clear, balanced, and engaging novelistic style. Vary sentence structure and length. Avoid overly complex or overly simple prose. Focus on strong storytelling and clear narration.
+    tooltip = Clear, balanced, engaging storytelling.
+  custom
+    label = Custom
+    instruction = [storyWritingStyleCustomInputEl.value]
   descriptive
-    - **Writing Style: Descriptive.** Focus heavily on rich, sensory details. Paint a vivid picture of the setting, characters, and atmosphere. Use strong verbs and evocative adjectives to immerse the reader in the scene.
+    label = Descriptive
+    instruction = Focus heavily on rich, sensory details. Paint a vivid picture of the setting, characters, and atmosphere. Use strong verbs and evocative adjectives to immerse the reader in the scene.
+    tooltip = Rich, sensory details. Vivid settings and characters.
   minimalist
-    - **Writing Style: Minimalist.** Use short, direct, and unadorned sentences. Omit needless words. Focus on action and subtext, implying emotion rather than stating it. The prose should be sparse and clean.
+    label = Minimalist
+    instruction = Use short, direct, and unadorned sentences. Omit needless words. Focus on action and subtext, implying emotion rather than stating it. The prose should be sparse and clean.
+    tooltip = Short, direct sentences. Sparse and clean prose.
   poetic
-    - **Writing Style: Poetic & Lyrical.** Use evocative imagery, metaphor, and simile. Prioritize the rhythm and sound of the prose. Sentences may be long and flowing, with a focus on emotional resonance.
+    label = Poetic
+    name = Poetic & Lyrical
+    instruction = Use evocative imagery, metaphor, and simile. Prioritize the rhythm and sound of the prose. Sentences may be long and flowing, with a focus on emotional resonance.
+    tooltip = Evocative imagery, metaphor, lyrical and flowing.
   journalistic
-    - **Writing Style: Journalistic.** Adopt an objective, factual, and detached tone. Report events clearly and concisely, like a newspaper article. Avoid emotional language and flowery descriptions.
+    label = Journalistic
+    instruction = Adopt an objective, factual, and detached tone. Report events clearly and concisely, like a newspaper article. Avoid emotional language and flowery descriptions.
+    tooltip = Objective, factual, concise, newspaper-like.
   wonderous
-    - **Writing Style: Wonderous.** Focus on creating a sense of awe and wonder. Use vivid, imaginative descriptions. The tone is often optimistic, magical, or filled with childlike curiosity.
+    label = Wonderous
+    instruction = Focus on creating a sense of awe and wonder. Use vivid, imaginative descriptions. The tone is often optimistic, magical, or filled with childlike curiosity.
+    tooltip = Awe-inspiring, imaginative, optimistic tone.
   stream_of_consciousness
-    - **Writing Style: Stream of Consciousness.** Write in a continuous, flowing "train of thought." Leap between thoughts, memories, and sensory inputs. Ignore conventional grammar and punctuation to mimic the raw, unfiltered flow of a character's mind.
+    label = Stream of Consciousness
+    instruction = Write in a continuous, flowing "train of thought." Leap between thoughts, memories, and sensory inputs. Ignore conventional grammar and punctuation to mimic the raw, unfiltered flow of a character's mind.
+    tooltip = Continuous train of thought, raw and unfiltered.
   epistolary
-    - **Writing Style: Epistolary.** The entire narrative must be told through documents, such as letters, diary entries, emails, blog posts, or text messages. The style of each document should reflect its author, but the overall narrative should be coherent.
+    label = Epistolary
+    instruction = The entire narrative must be told through documents, such as letters, diary entries, emails, blog posts, or text messages. The style of each document should reflect its author, but the overall narrative should be coherent.
+    tooltip = Told through letters, diaries, emails; coherent overall.
   satirical
-    - **Writing Style: Satirical.** Use irony, humor, and exaggeration to criticize or mock a subject. The tone should be witty, sharp, and subversive, often taking a cynical or absurd perspective.
+    label = Satirical
+    instruction = Use irony, humor, and exaggeration to criticize or mock a subject. The tone should be witty, sharp, and subversive, often taking a cynical or absurd perspective.
+    tooltip = Ironic, witty, exaggerated, subversive tone.
   gothic
-    - **Writing Style: Gothic.** Use dramatic, moody, and atmospheric language. Build a sense of dread, mystery, and suspense. Focus on dark settings, decaying grandeur, and characters' heightened dark emotions.
+    label = Gothic
+    instruction = Use dramatic, moody, and atmospheric language. Build a sense of dread, mystery, and suspense. Focus on dark settings, decaying grandeur, and characters' heightened dark emotions.
+    tooltip = Dramatic, moody, suspenseful, dark atmosphere.
   romantic
-    - **Writing Style: Romantic.** Emphasize strong emotions, individualism, and the awe-inspiring beauty of nature. The tone is often passionate, awestruck, or melancholic. (This refers to the literary movement, not just love stories).
+    label = Romantic
+    instruction = Emphasize strong emotions, individualism, and the awe-inspiring beauty of nature. The tone is often passionate, awestruck, or melancholic. (This refers to the literary movement, not just love stories).
+    tooltip = Passionate, emotional, awe of nature.
   realist
-    - **Writing Style: Realist.** Focus on the objective, "true-to-life" depiction of everyday people and their social realities. The prose should be straightforward and avoid romanticism, exaggeration, or melodrama.
+    label = Realist
+    instruction = Focus on the objective, "true-to-life" depiction of everyday people and their social realities. The prose should be straightforward and avoid romanticism, exaggeration, or melodrama.
+    tooltip = True-to-life, straightforward depiction of everyday reality.
   naturalist
-    - **Writing Style: Naturalist.** A more extreme form of Realism. Portray characters as being controlled by their environment, heredity, and animalistic instincts. The tone is often grim, deterministic, and detached.
+    label = Naturalist
+    instruction = A more extreme form of Realism. Portray characters as being controlled by their environment, heredity, and animalistic instincts. The tone is often grim, deterministic, and detached.
+    tooltip = Deterministic, environment-driven characters, grim tone.
   modernist
-    - **Writing Style: Modernist.** Focus on the inner, subjective experience of the characters. Experiment with form, fragmented narratives, and non-linear timelines. Often includes themes of alienation and disillusionment.
+    label = Modernist
+    instruction = Focus on the inner, subjective experience of the characters. Experiment with form, fragmented narratives, and non-linear timelines. Often includes themes of alienation and disillusionment.
+    tooltip = Inner experience, fragmented form, alienation themes.
   existing
-    - **Writing Style: Existing.** Use the pre-exisitng StorySoFar to learn the writing style and continue it's formatting.
+    label = Local (Learned)
+    name = Existing
+    instruction = Use the pre-exisitng StorySoFar to learn the writing style and continue it's formatting.
 
 commentChannels
   general

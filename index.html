@@ -511,10 +511,10 @@ if(localStorage.welcomeComplete) {
     </div>
   </div></div>
 <div id="storySettingsModalEl" class="modalOverlay" hidden>
-  <div class="modalBox" style="max-width:min(95vw, 560px);">
+  <div id="settingsContainerEl" class="modalBox" style="max-width:min(95vw, 560px);">
     <div class="modalHeader">
       <div class="storySettingsModalTitleRow">
-        <div style="font-weight:bold;">Story Settings</div>
+        Story Settings
       </div>
       <button class="modalCloseBtn" onclick="closeStorySettingsModal()" title="Close">✕</button> <!--Story Settings-->
     </div>
@@ -522,7 +522,7 @@ if(localStorage.welcomeComplete) {
       <div class="modalSection modalSectionHalf">
         <div class="modalSectionTitle">Perspective</div>
         <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+          <div class="modalRow" style="flex:1;">
             <select id="storyPerspectiveSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyPerspective=this.value;">
               <option value="first">First Person (I, me, my)</option>
               <option value="second" selected>Second Person (you, your)</option>
@@ -666,7 +666,7 @@ if(localStorage.welcomeComplete) {
       <div class="modalSection modalSectionHalf">
         <div class="modalSectionTitle">Game Mode</div>
         <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+          <div class="modalRow">
             <select id="storyGameModeSelectEl" style="flex:1; width:100%;" onchange="localStorage.gameMode=this.value; updateButtonsDisplay();">
               <option value="" selected>📖 Story</option>
               <option value="game">🎲 Game</option>
@@ -677,7 +677,7 @@ if(localStorage.welcomeComplete) {
       <div class="modalSection modalSectionHalf">
         <div class="modalSectionTitle" >Dice Roll</div>
         <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
+          <div class="modalRow">
             <label><input id="storyDiceCheckbox" oninput="localStorage.storyDiceEnabled=this.checked ? '1' : ''; diceRollBtn.hidden = this.checked ? false : true;" type="checkbox"> Enable Dice Rolls</label>
           </div>
         </div>
@@ -720,7 +720,7 @@ if(localStorage.welcomeComplete) {
       <div class="modalSection modalSectionHalf"> <!--Formatting-->
         <div class="modalSectionTitle">Formatting</div>
           <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
+          <div class="modalRow">
             <label><input id="storyDashesCheckbox" oninput="localStorage.storyDashesEnabled=this.checked ? '1' : '';" type="checkbox"> Allow —/– dashes</label>  
           </div>
         </div>
@@ -729,16 +729,14 @@ if(localStorage.welcomeComplete) {
     </div>
     <div class="modalHeader"> <!--Global Setting-->
       <div class="storySettingsModalTitleRow">
-        <div style="font-weight:bold;">
-          Global Settings <span id="welcomeResetEl" hidden style="font-size:0.7rem; font-weight:normal; margin-left:10px; cursor:pointer; text-decoration:underline;" onclick="delete localStorage.welcomeComplete; this.hidden=true">(reset welcome prompt)</span>
-        </div>
+        Global Settings <span id="welcomeResetEl" hidden style="font-size:0.7rem; font-weight:normal; margin-left:10px; cursor:pointer; text-decoration:underline;" onclick="delete localStorage.welcomeComplete; this.hidden=true">(reset welcome prompt)</span>
       </div>
     </div>
     <div class="modalRow modalSectionRow"> <!--Naming Scheme / Formatting-->
       <div class="modalSection modalSectionHalf"> <!--Save File Timestamp-->
         <div class="modalSectionTitle">Save File Timestamp</div>
-          <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
+        <div class="modalRow themeInlineRow">
+          <div class="modalRow">
             <label><input id="saveFileTimestampEl" oninput="localStorage.saveFileTimestamp=this.checked ? '1' : '';" type="checkbox"> Disable Timestamp</label>  
           </div>
         </div>
@@ -746,8 +744,8 @@ if(localStorage.welcomeComplete) {
       </div>
       <div class="modalSection modalSectionHalf"> <!--Save File Suffix-->
         <div class="modalSectionTitle">Save File Suffix</div>
-          <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center; margin-top:0;">
+        <div class="modalRow themeInlineRow">
+          <div class="modalRow" style="margin-top:0;">
             <input id="saveFileSuffixEl" oninput="localStorage.saveFileSuffix=this.value" placeholder="pfstory (default)">
           </div>
         </div>
@@ -2648,6 +2646,11 @@ else ai({preload:true});
   .modalActions .btn-primary {
     font-size: 13px;
     padding: 0.45rem 1rem;
+  }
+
+  /* Settings */
+  .storySettingsModalTitleRow {
+    font-weight: bold;
   }
   
   /* Notepad Panel */
