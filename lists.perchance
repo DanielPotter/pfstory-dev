@@ -2772,7 +2772,7 @@ async autoUpdateBibleSection(options) =>
       storySoFarEl.value = (cleanedStoryText ? cleanedStoryText + "\n\n" : "") + bibleMarker;
       localStorage.storySoFar = storySoFarEl.value;
     }
-  closeNotepadPanel();
+  closeToolPanel();
   Object.assign(openNotepadBtn, {
     disabled: true,
     innerHTML: `${icon("spinner spin-pulse")} Notepad`,
@@ -4060,7 +4060,7 @@ saveNotepadEditorToActiveTab() =>
   // if (codeDebug) console.log("active:");
   // if (codeDebug) console.log(active);
   setNotebookDataForScope(scope, data);
-  if(typeof notepadPanel !== "undefined" && !notepadPanel.hidden) renderNotepadTabs({skipLoad:true});
+  if(typeof toolPanel !== "undefined" && !toolPanel.hidden) renderNotepadTabs({skipLoad:true});
   if(scope === "app") requestAppNotebookSaveDebounced({debounceMs:400});
   else requestSaveCurrentStory({debounceMs:400});
 
@@ -4213,12 +4213,12 @@ onNotepadTabsSelectChange(value) =>
   }
   setActiveNotepadTab(value);
 
-isNotepadPanelOpen() =>
+isToolPanelOpen() =>
   return document.body.classList.contains("notepadOpen");
 
-openNotepadPanel() =>
-  if(typeof notepadPanel === "undefined") return;
-  notepadPanel.hidden = false;
+openToolPanel() =>
+  if(typeof toolPanel === "undefined") return;
+  toolPanel.hidden = false;
   requestAnimationFrame(() => {
     document.body.classList.add("notepadOpen");
     updateNotepadOverlayMode();
@@ -4232,25 +4232,25 @@ openNotepadPanel() =>
   renderNotepadTabs();
   setupNotepadResizer();
 
-toggleNotepadPanel() =>
-  if(document.body.classList.contains("notepadOpen")) closeNotepadPanel();
-  else openNotepadPanel();
+toggleToolPanel() =>
+  if(document.body.classList.contains("notepadOpen")) closeToolPanel();
+  else openToolPanel();
 
 openNotepadForStory() =>
   if(typeof notepadScopeSelectEl !== "undefined") notepadScopeSelectEl.value = "story";
   window.notepadScope = "story";
-  openNotepadPanel();
+  openToolPanel();
   closeStoryToolsMenu();
 
-closeNotepadPanel() =>
-  if(typeof notepadPanel === "undefined") return;
+closeToolPanel() =>
+  if(typeof toolPanel === "undefined") return;
   saveNotepadEditorToActiveTab();
   document.body.classList.remove("notepadOpen");
   document.body.classList.remove("notepadOverlayMode");
   if(typeof notepadTabMenu !== "undefined") notepadTabMenu.hidden = true;
   if(typeof notepadOverlay !== "undefined") notepadOverlay.hidden = true;
   setTimeout(() => {
-    if(!document.body.classList.contains("notepadOpen")) notepadPanel.hidden = true;
+    if(!document.body.classList.contains("notepadOpen")) toolPanel.hidden = true;
   }, 160);
 
 setNotepadScope(scope) =>
@@ -4272,7 +4272,7 @@ setNotepadScope(scope) =>
   renderNotepadTabs();
 
 addNotepadTab(name, opts) =>
-  const isNotepadOpen = isNotepadPanelOpen();
+  const isNotepadOpen = isToolPanelOpen();
   if (isNotepadOpen) saveNotepadEditorToActiveTab();
   let scope = opts?.scope || getNotebookScope();
   let data = getNotebookDataForScope(scope);
@@ -4342,7 +4342,7 @@ updateNotepadForCurrentStory() =>
   if(typeof notepadScopeSelectEl !== "undefined") {
     notepadScopeSelectEl.value = getNotebookScope();
   }
-  if(typeof notepadPanel !== "undefined" && !notepadPanel.hidden) {
+  if(typeof toolPanel !== "undefined" && !toolPanel.hidden) {
     renderNotepadTabs();
   }
 
@@ -4357,12 +4357,12 @@ updateNotepadOverlayMode() =>
 
 setupNotepadResizer() =>
   if(window.notepadResizerSetup) return;
-  if(typeof notepadResizeHandle === "undefined" || typeof notepadPanel === "undefined") return;
+  if(typeof notepadResizeHandle === "undefined" || typeof toolPanel === "undefined") return;
   window.notepadResizerSetup = true;
   notepadResizeHandle.addEventListener("pointerdown", e => {
     e.preventDefault();
     let startX = e.clientX;
-    let startWidth = notepadPanel.getBoundingClientRect().width;
+    let startWidth = toolPanel.getBoundingClientRect().width;
     notepadResizeHandle.setPointerCapture(e.pointerId);
     function onMove(ev) {
       let delta = startX - ev.clientX;
@@ -4374,7 +4374,7 @@ setupNotepadResizer() =>
       notepadResizeHandle.releasePointerCapture(ev.pointerId);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      let width = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--notepad-width")) || notepadPanel.getBoundingClientRect().width;
+      let width = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--notepad-width")) || toolPanel.getBoundingClientRect().width;
       localStorage.notepadWidth = Math.round(width);
     }
     window.addEventListener("pointermove", onMove);
@@ -4413,7 +4413,7 @@ plugins
     isDirty(tabId) =>
       return !window.pluginCacheDirtyMap || window.pluginCacheDirtyMap.get(tabId);
     updateAll(force) =>
-      if (isNotepadPanelOpen()) {
+      if (isToolPanelOpen()) {
         saveNotepadEditorToActiveTab();
       }
       if (!force && !this.hasDirty()) return;
