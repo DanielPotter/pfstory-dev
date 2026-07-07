@@ -2,7 +2,7 @@ $meta // this is the stuff that appears in search engines, social media preview 
   header
     mode = minimal
   title = 🔮 Purple's RPG Stories
-  description = Custom RPG/Story Generator made by iyruk
+  description = Custom RPG/Story Generator made by iyruk and extended by DanielPotter. This is a powerful story generator and game powered by Perchance AI. Features include multiple story management, detailed information tracking, and an extensible plugin system that provides infinite customization.
 
 codeDebug = true // change to true if you want to see code output in dev tools
 aiDebug = true // change to true if you want to see ai prompt output in dev tools

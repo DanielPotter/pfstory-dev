@@ -1,6 +1,7 @@
 ## 2026.07.07 (DanielPotter)
 Enhancements:
 - Improved raw access to the generator for plugins by exposing the root Perchance node. Search for `HINT: Raw Access for Plugins` in the Perchance code to learn more.
+- Updated the generator description.
 
 ## 2026.06.27 (DanielPotter)
 Fix:
