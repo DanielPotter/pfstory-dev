@@ -4513,9 +4513,11 @@ plugins
       notepad: notepadApi,
       plugins: plugins.publicApi,
       story: storyApi,
-      // This will give raw access to this generator. I'm not going to document this, but it's here for anyone technical enough to use it.
-      // If you're reading this, that includes you. :)
-      _window: window,
+      // HINT: Raw Access for Plugins
+      // The following fields will give raw access to this generator. I'm not going to include them in the plugin documentation, but they're here for anyone technical enough (or determined enough) to use it.
+      // If you're reading this comment, that includes you. :)
+      _window: window, // This includes everything defined in the HTML portion of this generator, state information, and much more.
+      _root: $root, // This includes everything defined in the Perchance portion of this generator.
     };
   broadcast(name, ...args) =>
     const hookNames = [];

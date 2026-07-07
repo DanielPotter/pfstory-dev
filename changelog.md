@@ -1,3 +1,7 @@
+## 2026.07.07 (DanielPotter)
+Enhancements:
+- Improved raw access to the generator for plugins by exposing the root Perchance node. Search for `HINT: Raw Access for Plugins` in the Perchance code to learn more.
+
 ## 2026.06.27 (DanielPotter)
 Fix:
 - Swapped the text editor from `pftexteditor` to `text-editor-plugin-v1` so that Markdown isn't rendered inline. Markdown format decorators (`*`, `>`, `#`, etc.) are no longer hidden. Inline rendering is cool and may return, but it would be optional.
