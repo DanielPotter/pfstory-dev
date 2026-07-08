@@ -35,6 +35,13 @@ This fork builds on the base experience with a stronger emphasis on extensibilit
 - A more flexible story bible workflow, including custom templates, auto-update controls, undo support, and safer editing during generation
 - More reliable generation behavior with paragraph-aware continuation, smoother stop and regenerate flows, and better handling of inline edits
 
+This fork also includes fixes for pre-existing issues in the original generator include:
+
+- Better preservation of edits during interrupted generation
+- More predictable story continuation and regeneration behavior
+- Cleaner notebook and story bible context handling
+- Improved editor and UI behavior for markdown, shortcuts, and mobile layouts
+
 ## Running and previewing
 
 This project is intended to run inside the Perchance environment. There are no standalone local scripts in this repository that will launch the full generator outside that hosted context.
