@@ -1,4 +1,7 @@
 ## 2026.22.07 (Daniel Potter)
+Enhancements:
+- Added the ability for plugins to get other plugins by ID. A plugin's ID will default to the plugin's name with spaces removed.
+
 Fix:
 - Improved styling for quoted text so that inch measurements in the story don't interfere with how dialog is styled.
 - Fixed inconsistency with how comments and async functions were styled.

@@ -6,6 +6,7 @@ This generator support plugins. To add a plugin, simply create a new notebook pa
 $output = [__plugin]
 
 __plugin
+  id = my_plugin
   name = My Plugin
   enabled = [true]
   isPlugin = [true]
@@ -18,6 +19,7 @@ __plugin
 
 ## Plugin Members
 
+- **id** (string): An identifier for the plugin that can be used to help other plugins access this one.
 - **name** (string): Display name of the plugin.
 - **enabled** (boolean, optional): Whether the plugin is active. Defaults to `true`.
 - **isPlugin** (boolean): Must be set to `true` to identify this as a plugin.
@@ -68,7 +70,8 @@ The `api` object passed to `init(api)` provides access to core generator functio
 
 ### Plugin Functions
 
-- **plugins.list()** - Gets all loaded plugins.
+- **plugins.list(opts)** - Gets all loaded plugins with an optional filter. Possible options: `enabled`, `scope`, `id`.
+- **plugins.get(id)** - Gets the first loaded and enabled plugin with the specified ID.
 - **plugins.getEnabled()** - Gets only the loaded plugins that are enabled.
 
 ### Story Functions

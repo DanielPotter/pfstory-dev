@@ -4389,6 +4389,7 @@ plugins
   publicApi
     list = [this.getParent.list]
     getEnabled = [this.getParent.getEnabled]
+    get = [this.getParent.getById]
   cache
     get() =>
       if (!window.pluginCache) window.pluginCache = new Map();
@@ -4482,8 +4483,10 @@ plugins
       const plugin = entry.instance;
       // Make sure metadata properties are configured.
       plugin.isPlugin = true;
+      plugin.$tabId = entry.sourceId;
       plugin.enabled = plugin.enabled ?? plugin.Enabled ?? true;
       plugin.name = plugin.name ?? plugin.Name;
+      plugin.id = plugin.id ?? plugin.name.replace(" ", "");
       plugin.apiVersion = plugin.apiVersion ?? plugin.ApiVersion;
       plugin.shortcutLists = plugin.shortcutLists ?? plugin.ShortcutLists;
       // Run initialization.
@@ -4499,15 +4502,19 @@ plugins
       plugin.deinit?.();
       entry.initialized = false;
   list(opts) =>
-    // Note: This function does not reinitialize plugins if they're dirty. This is makes it safe for plugins to use.
+    // Note: This function does not reinitialize plugins if they're dirty. This makes it safe for plugins to use.
     const plugins = [];
     return this.cache.get().values().forEach(entry => {
       if (!entry.instance) return;
+      if (opts?.scope && entry.scope != opts.scope) return;
       if (opts?.enabled && !entry.instance.enabled) return;
+      if (opts?.id && entry.instance.id != opts.id) return;
       plugins.push(entry.instance);
     });
   getEnabled() =>
     return this.list({enabled:true});
+  getById(id) =>
+    return this.list({enabled:true, id}).at(0);
   getApiObject() =>
     return {
       notepad: notepadApi,
@@ -4583,6 +4590,7 @@ getPluginTemplate() =>
     "__plugin",
     "  isPlugin = [true]",
     "  apiVersion = 1",
+    "  id = my_plugin",
     "  name = My Plugin",
     "  init(api) =>",
     "    \// This will give you access to select functions from the story generator.",
