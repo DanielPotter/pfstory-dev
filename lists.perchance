@@ -5538,7 +5538,7 @@ getStoryTextStyleRules() =>
     {match: /(\s|^|—)\*\*(.+?)\*\*(?=\s|$|—|\.|,)/g, style: "font-weight:bold;"}, // **Hello World**
     {match: /(?<=[\s(—]|^)\*"(?!\s).*?"\*(?=[\s).—]|$)/g,  style: "color:var(--text-style-rule-asterisk-color); color:light-dark(#303030, #536878); font-style:italic;"}, // *"I can't believe this!"*
     {match: /(?:(?<=\s")|(?<=[\s—]))\*[^ \*"“”][^*"“”]*\*(?![“”])(?=[\s—,."]|$)/g, style: asteriskStyle || "font-style:italic;"}, // *Quoted Text*
-    {match: /["“][^"]+?["”]/g,    style: quoteStyle || "color:var(--text-style-rule-quote-color); font-style:italic;"}, // "Hello World"
+    {match: /(?<!\d)["“][^"]+?["”]/g,    style: quoteStyle || "color:var(--text-style-rule-quote-color); font-style:italic;"}, // "Hello World"
     {match: /(^|\n)SUMMARY\^[0-9]+: /g, style: "font-weight:bold;"},
     {match: /^>\s?\S+:/g,           style: "font-weight:bold;"}, // : bold
     {match: /^(?!>\s?)[^:]{1,30}?:(\s|$)/g, style: "font-weight:bold;"}, // : bold
@@ -5553,13 +5553,19 @@ getStoryTextStyleRules() =>
 getPerchanceTextStyleRules() =>
   let rules = [
     {match: /.+/g, style: "font-family:monospace;"},
-    {match: /\/\/.*$/g, style: "color:#7d8799;"},
-    {match: /^\s*\$?\w+\(.*\) =>\s*$/g, style: "color:light-dark(#c67600, #e5c07b); font-weight:bold;"},
+    // Comments (It must be preceeded by a space for Perchance to consider it a comment.)
+    {match: / \/\/.*$/g, style: "color:#7d8799;"},
+    // Functions
+    {match: /^\s*(auto\s+)?\$?\w+\(.*\) =>\s*$/g, style: "color:light-dark(#c67600, #e5c07b); font-weight:bold;"},
+    // Special list names
     {match: /^\s*\$output(?=\s*=)/g, style: "color:light-dark(#435156, #56b6c2);"},
+    // Square brackets
     {match: /[=\[\]]/g, style: "color:light-dark(#435156, #56b6c2);"},
+    // Curly braces
     {match: /[{}]/g, style: "color:light-dark(#CB4B16, #fcae1d);"},
 
-    {match: /(\s|^|—)\*\*(.+?)\*\*(?=\s|$|—|\.|,)/g, style: "font-weight:bold;"}, // **Bold Text**
+    // **Bold Text**
+    {match: /(\s|^|—)\*\*(.+?)\*\*(?=\s|$|—|\.|,)/g, style: "font-weight:bold;"},
   ];
   return rules;
 

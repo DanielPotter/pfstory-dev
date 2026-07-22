@@ -1,3 +1,8 @@
+## 2026.22.07 (Daniel Potter)
+Fix:
+- Improved styling for quoted text so that inch measurements in the story don't interfere with how dialog is styled.
+- Fixed inconsistency with how comments and async functions were styled.
+
 ## 2026.07.07 (DanielPotter)
 Enhancements:
 - Improved raw access to the generator for plugins by exposing the root Perchance node. Search for `HINT: Raw Access for Plugins` in the Perchance code to learn more.
