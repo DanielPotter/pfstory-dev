@@ -4010,7 +4010,7 @@ tools
       if (!document.body.classList.contains("toolPanelOpen")) toolPanel.hidden = true;
     }, 160);
   refreshPanelButtons() =>
-    const tools = this.getPanelDefinitions({sort:true});
+    const toolPanels = this.getPanelDefinitions({sort:true});
     // Remove everything from the button container except for the close button.
     // This could be done more intelligently by comparing the existing buttons and which buttons should be there,
     // but that isn't necessary at this point in time because I expect this function to be called infrequently
@@ -4023,7 +4023,7 @@ tools
       }
     }
     // Create and insert tool buttons.
-    tools.forEach(tool => {
+    toolPanels.forEach(tool => {
       const button = document.createElement("button");
       button.classList.add("btn-icon", "toolPanelButton");
       button.title = tool.title;
@@ -4031,7 +4031,7 @@ tools
       button.style.height = "37px";
       // TODO: Use a default icon if one isn't specified.
       button.innerHTML = tool.icon;
-      button.onclick = () => tools.showPanel(tool.id);
+      button.onclick = () => tools.selectPanel(tool.id);
       buttonContainer.appendChild(button);
       tool.$button = button;
     });
