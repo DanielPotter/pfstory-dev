@@ -1878,7 +1878,7 @@ async switchToStory(id, opts) =>
   window.loadingStoryInProgress = true;
   loadChatDataIntoInputAreas(data);
   window.loadingStoryInProgress = false;
-  window.bibleCacheDirty = true;
+  markBibleCacheDirty();
 
   updateCurrentStoryTitleDisplay();
   renderStoriesList();
@@ -4040,7 +4040,8 @@ saveNotepadEditorToActiveTab() =>
         return;
       }
       active.content = newContent;
-      window.bibleCacheDirty = true;
+      console.log("saveNotepadEditorToActiveTab : Marking bible cache as dirty.")
+      markBibleCacheDirty();
     } else {
       if (active.content == newContent) {
         //console.log("saveNotepadEditorToActiveTab : Skipping update to tab because there is no change.")
@@ -6020,19 +6021,21 @@ injectSummariesAndComputeNextSummariesInBackgroundIfNeeded() =>
     }
   })();
 
+markBibleCacheDirty() =>
+  window.bibleCacheTextDirty = true;
+  window.bibleCachePromptDirty = true;
+
 //  Helper function to build the combined story bible text
 getCombinedStoryBibleText(prompt) =>
   if(!infoTrackingBtn.dataset.enabled) return "";  
 
-  if (!window.bibleCacheDirty) {
-    if (prompt === true && window.bibleCachePrompt !== null) {
-      if (codeDebug) console.log("getCombinedStoryBibleText : returning cached prompt result");
-      return window.bibleCachePrompt;
-    }
-    if (!prompt && window.bibleCacheText !== null) {
-      if (codeDebug) console.log("getCombinedStoryBibleText : returning cached text result");
-      return window.bibleCacheText;
-    }
+  if (!window.bibleCachePromptDirty && prompt === true && window.bibleCachePrompt !== null) {
+    if (codeDebug) console.log("getCombinedStoryBibleText : returning cached prompt result");
+    return window.bibleCachePrompt;
+  }
+  if (!window.bibleCacheTextDirty && !prompt && window.bibleCacheText !== null) {
+    if (codeDebug) console.log("getCombinedStoryBibleText : returning cached text result");
+    return window.bibleCacheText;
   }
   
   let scope = "bible";
@@ -6077,7 +6080,7 @@ getCombinedStoryBibleText(prompt) =>
       data: sortedTabs[i]
     }));
     window.bibleCachePrompt = result;
-    window.bibleCacheDirty = false;
+    window.bibleCachePromptDirty = false;
     return result;
   }
 
@@ -6118,7 +6121,7 @@ getCombinedStoryBibleText(prompt) =>
   </world_knowledge_base>`.trim();
 
   window.bibleCacheText = result;
-  window.bibleCacheDirty = false;
+  window.bibleCacheTextDirty = false;
   return result;
   
 // This is the prompt for updating any bible section

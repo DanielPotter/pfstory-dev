@@ -1,3 +1,7 @@
+## 2026.23.07 (Daniel Potter)
+Fix:
+- Fixed changes made to the story bible being ignored. This has been a long-standing bug in pfstory.
+
 ## 2026.22.07 (Daniel Potter)
 Enhancements:
 - Added the ability for plugins to get other plugins by ID. A plugin's ID will default to the plugin's name with spaces removed.
