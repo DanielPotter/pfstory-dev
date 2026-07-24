@@ -3949,6 +3949,12 @@ tools
         if (codeDebug) console.log("notepadToolPanel.onHide");
         saveNotepadEditorToActiveTab();
         if(typeof notepadTabMenu !== "undefined") notepadTabMenu.hidden = true;
+    settingsToolPanel
+      id = settingsToolPanel
+      order = 999999
+      title = Settings
+      icon = ⚙️
+      elementId = settingsPanel
   getPanelDefinitions(opts) =>
     const tools = [
       ...this.defaultTools.selectAll,

@@ -237,6 +237,250 @@ if(localStorage.welcomeComplete) {
         <button name="createPluginBtn" onclick="addPluginTab()">🔌 create plugin</button>
       </div>
     </div>
+    <div id="settingsPanel" hidden>
+      <div class="modalHeader">
+        <div class="storySettingsModalTitleRow">
+          <div style="font-weight:bold;">Story Settings</div>
+        </div>
+        <button class="modalCloseBtn" onclick="closeStorySettingsModal()" title="Close">✕</button> <!--Story Settings-->
+      </div>
+      <div class="modalRow modalSectionRow"> <!--Perspective / Difficulty-->
+        <div class="modalSection modalSectionHalf">
+          <div class="modalSectionTitle">Perspective</div>
+          <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+              <select id="storyPerspectiveSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyPerspective=this.value;">
+                <option value="first">First Person (I, me, my)</option>
+                <option value="second" selected>Second Person (you, your)</option>
+                <option value="third">Third Person (he, she, they)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modalSection modalSectionHalf">
+          <div class="modalSectionTitle">Difficulty</div>
+          <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+              <select id="difficultyModeEl" style="flex:1;" onchange="localStorage.difficultyMode=this.value;">
+                <option value="">🌱 Default</option>
+                <option value="realistic">⚖️ Realistic</option>
+                <option value="hard">🪖 Hard</option>
+                <option value="impossible">☠️ Ultra Hard </option>
+                <option value="free">🪁 Free form</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modalRow modalSectionRow"> <!--Writing Style / Length-->
+        <div class="modalSection modalSectionHalf">
+          <div class="modalSectionTitle">Writing Style</div>
+          <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+              <select id="storyWritingStyleSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyWritingStyleSelect=this.value; storyCustomWritingStyleCtn.hidden=(this.value==='custom' ? false : true)">
+                <option value="default" selected>Novel Style (Default)</option>
+                <option value="custom">Custom</option>
+                <option value="descriptive">Descriptive</option>
+                <option value="epistolary">Epistolary</option>
+                <option value="gothic">Gothic</option>
+                <option value="journalistic">Journalistic</option>
+                <option value="existing">Local (Learned)</option>
+                <option value="minimalist">Minimalistic</option>
+                <option value="modernist">Modernist</option>
+                <option value="naturalist">Naturalist</option>
+                <option value="poetic">Poetic</option>
+                <option value_l="realist">Realist</option>
+                <option value="romantic">Romantic</option>
+                <option value="satirical">Satirical</option>
+                <option value="stream_of_consciousness">Stream of Consciousness</option>
+                <option value="wonderous">Wonderous</option>
+              </select>
+              <div id="storyStyleHelpCtn" class="storyStyleHelpCtn">
+                <button id="storyStyleHelpBtn" class="storyStyleHelpBtn" title="Writing Styles">❓</button>
+                <div id="storyStyleHelpTooltip" class="storyStyleHelpTooltip" hidden>
+                  <div style="text-align: left;">
+                    <strong>Novel Style (Default):</strong> Clear, balanced, engaging storytelling.<br>
+                    <strong>Descriptive:</strong> Rich, sensory details. Vivid settings and characters.<br>
+                    <strong>Epistolary:</strong> Told through letters, diaries, emails; coherent overall.<br>
+                    <strong>Gothic:</strong> Dramatic, moody, suspenseful, dark atmosphere.<br>
+                    <strong>Journalistic:</strong> Objective, factual, concise, newspaper-like.<br>
+                    <strong>Minimalist:</strong> Short, direct sentences. Sparse and clean prose.<br>
+                    <strong>Modernist:</strong> Inner experience, fragmented form, alienation themes.<br>
+                    <strong>Naturalist:</strong> Deterministic, environment-driven characters, grim tone.<br>
+                    <strong>Poetic:</strong> Evocative imagery, metaphor, lyrical and flowing.<br>
+                    <strong>Realist:</strong> True-to-life, straightforward depiction of everyday reality.<br>
+                    <strong>Romantic:</strong> Passionate, emotional, awe of nature.<br>
+                    <strong>Satirical:</strong> Ironic, witty, exaggerated, subversive tone.<br>
+                    <strong>Stream of Consciousness:</strong> Continuous train of thought, raw and unfiltered.<br>
+                    <strong>Wonderous:</strong> Awe-inspiring, imaginative, optimistic tone.<br>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modalSection modalSectionHalf">
+          <div class="modalSectionTitle">Writing Length</div>
+          <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+              <select id="storyWritingLengthEl" style="flex:1;" onchange="localStorage.storyWritingLength=this.value;">
+                <option value="1" selected>1 Paragraph</option>
+                <option value="2">2 Paragraphs</option>
+                <option value="3">3 Paragraphs</option>
+                <option value="4">4 Paragraphs</option>
+                <option value="5">5 Paragraphs</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="storyCustomWritingStyleCtn" class="modalSection" hidden> <!--Custom Writing Syle-->
+        <div class="modalSectionTitle">Custom Writing Style</div>
+        <div class="modalRow">
+          <div class="modalField">
+            <div class="fontFieldInputRow">
+              <input id="storyWritingStyleResponseInputEl" placeholder="e.g. 'maximum 3 sentences'">
+            </div>
+          </div>
+        </div>
+        <div class="modalRow">
+          <div class="modalField">
+            <div class="fontFieldInputRow">
+              <input id="storyWritingStyleCustomInputEl" placeholder="e.g. 'unpredictable, absurd, surprising'">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modalRow modalSectionRow"> <!--Story Genre-->
+        <div class="modalSection modalSectionHalf">
+          <div class="modalSectionTitle">Genre</div>
+          <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+              <select id="storyGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyGenreSelect=this.value; storyGenreInputEl.hidden = (this.value !== 'custom'); storyCustomGenreCtn.hidden = !(this.value === 'custom' || storySubGenreSelectEl.value === 'custom');">  
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modalSection modalSectionHalf">
+          <div class="modalSectionTitle">Sub-Genre</div>
+          <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+              <select id="storySubGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storySubGenreSelect=this.value; storySubGenreInputEl.hidden = (this.value !== 'custom'); storyCustomGenreCtn.hidden = !(this.value === 'custom' || storyGenreSelectEl.value === 'custom');">
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="storyCustomGenreCtn" class="modalSection" hidden> <!--Custom Genre-->
+        <div class="modalSectionTitle">Custom Genre</div>
+        <div class="modalRow">
+          <div class="modalField">
+            <div class="fontFieldInputRow">
+              <input id="storyGenreInputEl" placeholder="e.g. 'Brief description of custom genre'" hidden>
+            </div>
+          </div>
+        </div>
+        <div class="modalRow">
+          <div class="modalField">
+            <div class="fontFieldInputRow">
+              <input id="storySubGenreInputEl" placeholder="e.g. 'Brief description of custom sub-genre'" hidden>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modalRow modalSectionRow"> <!--Game Mode / Dice Roll-->
+        <div class="modalSection modalSectionHalf">
+          <div class="modalSectionTitle">Game Mode</div>
+          <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+              <select id="storyGameModeSelectEl" style="flex:1; width:100%;" onchange="localStorage.gameMode=this.value; updateButtonsDisplay();">
+                <option value="" selected>📖 Story</option>
+                <option value="game">🎲 Game</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modalSection modalSectionHalf">
+          <div class="modalSectionTitle" >Dice Roll</div>
+          <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
+              <label><input id="storyDiceCheckbox" oninput="localStorage.storyDiceEnabled=this.checked ? '1' : ''; diceRollBtn.hidden = this.checked ? false : true;" type="checkbox"> Enable Dice Rolls</label>
+            </div>
+          </div>
+          <div  style="text-align:left; font-size:80%;">Adds a challenge to the story/game.</div>
+        </div>
+      </div>
+      <div class="modalRow modalSectionRow"> <!--Naming Scheme / Formatting-->
+        <div class="modalSection modalSectionHalf">
+          <div class="modalSectionTitle">Naming Conventions</div>
+          <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
+              <select id="storyNamingConventionSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyNamingConventionSelect=this.value;">
+                <option value="">Default</option>
+                <option value="aztec">Aztec</option>
+                <option value="celtic">Celtic</option>
+                <option value="chinese">Chinese</option>
+                <option value="dutch">Dutch</option>
+                <option value="egyptian">Egyptian</option>
+                <option value="english">English</option>
+                <option value="french">French</option>
+                <option value="german">German</option>
+                <option value="greek">Greek</option>
+                <option value="indian">Indian</option>
+                <option value="irish">Irish</option>
+                <option value="italian">Italian</option>
+                <option value="japanese">Japanese</option>
+                <option value="korean">Korean</option>
+                <option value="mayan">Mayan</option>
+                <option value="norse">Norse</option>
+                <option value="polish">Polish</option>
+                <option value="portuguese">Portuguese</option>
+                <option value="roman">Roman</option>
+                <option value="scottish">Scottish</option>
+                <option value="spanish">Spanish</option>
+                <option value="swedish">Swedish</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modalSection modalSectionHalf"> <!--Formatting-->
+          <div class="modalSectionTitle">Formatting</div>
+            <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
+              <label><input id="storyDashesCheckbox" oninput="localStorage.storyDashesEnabled=this.checked ? '1' : '';" type="checkbox"> Allow —/– dashes</label>  
+            </div>
+          </div>
+          <div  style="text-align:left; font-size:80%;">This will allow Em/En dashes in the story.</div>
+        </div>
+      </div>
+      <div class="modalHeader"> <!--Global Setting-->
+        <div class="storySettingsModalTitleRow">
+          <div style="font-weight:bold;">
+            Global Settings <span id="welcomeResetEl" hidden style="font-size:0.7rem; font-weight:normal; margin-left:10px; cursor:pointer; text-decoration:underline;" onclick="delete localStorage.welcomeComplete; this.hidden=true">(reset welcome prompt)</span>
+          </div>
+        </div>
+      </div>
+      <div class="modalRow modalSectionRow"> <!--Naming Scheme / Formatting-->
+        <div class="modalSection modalSectionHalf"> <!--Save File Timestamp-->
+          <div class="modalSectionTitle">Save File Timestamp</div>
+            <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
+              <label><input id="saveFileTimestampEl" oninput="localStorage.saveFileTimestamp=this.checked ? '1' : '';" type="checkbox"> Disable Timestamp</label>  
+            </div>
+          </div>
+          <div  style="text-align:left; font-size:80%;">Removes timestamp from save files</div>
+        </div>
+        <div class="modalSection modalSectionHalf"> <!--Save File Suffix-->
+          <div class="modalSectionTitle">Save File Suffix</div>
+            <div class="modalRow themeInlineRow">
+            <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center; margin-top:0;">
+              <input id="saveFileSuffixEl" oninput="localStorage.saveFileSuffix=this.value" placeholder="pfstory (default)">
+            </div>
+          </div>
+          <div  style="text-align:left; font-size:80%;">Example: StoryName.pfstory.json</div>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="toolPanelSidebarContainer">
     <button class="btn-icon" id="closeToolPanelBtn" onclick="closeToolPanel()" title="Close" style="width:37px; height:37px;">[icon("far-circle-xmark")]</button>
@@ -524,248 +768,6 @@ if(localStorage.welcomeComplete) {
 </div>
 <div id="storySettingsModalEl" class="modalOverlay" hidden>
   <div class="modalBox" style="max-width:min(95vw, 560px);">
-    <div class="modalHeader">
-      <div class="storySettingsModalTitleRow">
-        <div style="font-weight:bold;">Story Settings</div>
-      </div>
-      <button class="modalCloseBtn" onclick="closeStorySettingsModal()" title="Close">✕</button> <!--Story Settings-->
-    </div>
-    <div class="modalRow modalSectionRow"> <!--Perspective / Difficulty-->
-      <div class="modalSection modalSectionHalf">
-        <div class="modalSectionTitle">Perspective</div>
-        <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storyPerspectiveSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyPerspective=this.value;">
-              <option value="first">First Person (I, me, my)</option>
-              <option value="second" selected>Second Person (you, your)</option>
-              <option value="third">Third Person (he, she, they)</option>          
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="modalSection modalSectionHalf">
-        <div class="modalSectionTitle">Difficulty</div>
-        <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="difficultyModeEl" style="flex:1;" onchange="localStorage.difficultyMode=this.value;">
-              <option value="">🌱 Default</option>
-              <option value="realistic">⚖️ Realistic</option>
-              <option value="hard">🪖 Hard</option>
-              <option value="impossible">☠️ Ultra Hard </option>
-              <option value="free">🪁 Free form</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="modalRow modalSectionRow"> <!--Writing Style / Length-->
-      <div class="modalSection modalSectionHalf">
-        <div class="modalSectionTitle">Writing Style</div>
-        <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storyWritingStyleSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyWritingStyleSelect=this.value; storyCustomWritingStyleCtn.hidden=(this.value==='custom' ? false : true)">
-              <option value="default" selected>Novel Style (Default)</option>
-              <option value="custom">Custom</option>
-              <option value="descriptive">Descriptive</option>
-              <option value="epistolary">Epistolary</option>
-              <option value="gothic">Gothic</option>
-              <option value="journalistic">Journalistic</option>
-              <option value="existing">Local (Learned)</option>
-              <option value="minimalist">Minimalistic</option>
-              <option value="modernist">Modernist</option>
-              <option value="naturalist">Naturalist</option>
-              <option value="poetic">Poetic</option>
-              <option value_l="realist">Realist</option>
-              <option value="romantic">Romantic</option>
-              <option value="satirical">Satirical</option>
-              <option value="stream_of_consciousness">Stream of Consciousness</option>
-              <option value="wonderous">Wonderous</option>
-            </select>
-            <div id="storyStyleHelpCtn" class="storyStyleHelpCtn">
-              <button id="storyStyleHelpBtn" class="storyStyleHelpBtn" title="Writing Styles">❓</button>
-              <div id="storyStyleHelpTooltip" class="storyStyleHelpTooltip" hidden>
-                <div style="text-align: left;">
-                  <strong>Novel Style (Default):</strong> Clear, balanced, engaging storytelling.<br>
-                  <strong>Descriptive:</strong> Rich, sensory details. Vivid settings and characters.<br>
-                  <strong>Epistolary:</strong> Told through letters, diaries, emails; coherent overall.<br>
-                  <strong>Gothic:</strong> Dramatic, moody, suspenseful, dark atmosphere.<br>
-                  <strong>Journalistic:</strong> Objective, factual, concise, newspaper-like.<br>
-                  <strong>Minimalist:</strong> Short, direct sentences. Sparse and clean prose.<br>
-                  <strong>Modernist:</strong> Inner experience, fragmented form, alienation themes.<br>
-                  <strong>Naturalist:</strong> Deterministic, environment-driven characters, grim tone.<br>
-                  <strong>Poetic:</strong> Evocative imagery, metaphor, lyrical and flowing.<br>
-                  <strong>Realist:</strong> True-to-life, straightforward depiction of everyday reality.<br>
-                  <strong>Romantic:</strong> Passionate, emotional, awe of nature.<br>
-                  <strong>Satirical:</strong> Ironic, witty, exaggerated, subversive tone.<br>
-                  <strong>Stream of Consciousness:</strong> Continuous train of thought, raw and unfiltered.<br>
-                  <strong>Wonderous:</strong> Awe-inspiring, imaginative, optimistic tone.<br>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modalSection modalSectionHalf">
-        <div class="modalSectionTitle">Writing Length</div>
-        <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storyWritingLengthEl" style="flex:1;" onchange="localStorage.storyWritingLength=this.value;">
-              <option value="1" selected>1 Paragraph</option>
-              <option value="2">2 Paragraphs</option>
-              <option value="3">3 Paragraphs</option>
-              <option value="4">4 Paragraphs</option>
-              <option value="5">5 Paragraphs</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="storyCustomWritingStyleCtn" class="modalSection" hidden> <!--Custom Writing Syle-->
-      <div class="modalSectionTitle">Custom Writing Style</div>
-      <div class="modalRow">
-        <div class="modalField">
-          <div class="fontFieldInputRow">
-            <input id="storyWritingStyleResponseInputEl" placeholder="e.g. 'maximum 3 sentences'">
-          </div>
-        </div>
-      </div>
-      <div class="modalRow">
-        <div class="modalField">
-          <div class="fontFieldInputRow">
-            <input id="storyWritingStyleCustomInputEl" placeholder="e.g. 'unpredictable, absurd, surprising'">
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="modalRow modalSectionRow"> <!--Story Genre-->
-      <div class="modalSection modalSectionHalf">
-        <div class="modalSectionTitle">Genre</div>
-        <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storyGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyGenreSelect=this.value; storyGenreInputEl.hidden = (this.value !== 'custom'); storyCustomGenreCtn.hidden = !(this.value === 'custom' || storySubGenreSelectEl.value === 'custom');">  
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="modalSection modalSectionHalf">
-        <div class="modalSectionTitle">Sub-Genre</div>
-        <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storySubGenreSelectEl" style="flex:1; width:100%;" onchange="localStorage.storySubGenreSelect=this.value; storySubGenreInputEl.hidden = (this.value !== 'custom'); storyCustomGenreCtn.hidden = !(this.value === 'custom' || storyGenreSelectEl.value === 'custom');">
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="storyCustomGenreCtn" class="modalSection" hidden> <!--Custom Genre-->
-      <div class="modalSectionTitle">Custom Genre</div>
-      <div class="modalRow">
-        <div class="modalField">
-          <div class="fontFieldInputRow">
-            <input id="storyGenreInputEl" placeholder="e.g. 'Brief description of custom genre'" hidden>
-          </div>
-        </div>
-      </div>
-      <div class="modalRow">
-        <div class="modalField">
-          <div class="fontFieldInputRow">
-            <input id="storySubGenreInputEl" placeholder="e.g. 'Brief description of custom sub-genre'" hidden>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="modalRow modalSectionRow"> <!--Game Mode / Dice Roll-->
-      <div class="modalSection modalSectionHalf">
-        <div class="modalSectionTitle">Game Mode</div>
-        <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storyGameModeSelectEl" style="flex:1; width:100%;" onchange="localStorage.gameMode=this.value; updateButtonsDisplay();">
-              <option value="" selected>📖 Story</option>
-              <option value="game">🎲 Game</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="modalSection modalSectionHalf">
-        <div class="modalSectionTitle" >Dice Roll</div>
-        <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
-            <label><input id="storyDiceCheckbox" oninput="localStorage.storyDiceEnabled=this.checked ? '1' : ''; diceRollBtn.hidden = this.checked ? false : true;" type="checkbox"> Enable Dice Rolls</label>
-          </div>
-        </div>
-        <div  style="text-align:left; font-size:80%;">Adds a challenge to the story/game.</div>
-      </div>
-    </div>
-    <div class="modalRow modalSectionRow"> <!--Naming Scheme / Formatting-->
-      <div class="modalSection modalSectionHalf">
-        <div class="modalSectionTitle">Naming Conventions</div>
-        <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem; flex:1; flex-wrap:wrap;">
-            <select id="storyNamingConventionSelectEl" style="flex:1; width:100%;" onchange="localStorage.storyNamingConventionSelect=this.value;">
-              <option value="">Default</option>
-              <option value="aztec">Aztec</option>
-              <option value="celtic">Celtic</option>
-              <option value="chinese">Chinese</option>
-              <option value="dutch">Dutch</option>
-              <option value="egyptian">Egyptian</option>
-              <option value="english">English</option>
-              <option value="french">French</option>
-              <option value="german">German</option>
-              <option value="greek">Greek</option>
-              <option value="indian">Indian</option>
-              <option value="irish">Irish</option>
-              <option value="italian">Italian</option>
-              <option value="japanese">Japanese</option>
-              <option value="korean">Korean</option>
-              <option value="mayan">Mayan</option>
-              <option value="norse">Norse</option>
-              <option value="polish">Polish</option>
-              <option value="portuguese">Portuguese</option>
-              <option value="roman">Roman</option>
-              <option value="scottish">Scottish</option>
-              <option value="spanish">Spanish</option>
-              <option value="swedish">Swedish</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="modalSection modalSectionHalf"> <!--Formatting-->
-        <div class="modalSectionTitle">Formatting</div>
-          <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
-            <label><input id="storyDashesCheckbox" oninput="localStorage.storyDashesEnabled=this.checked ? '1' : '';" type="checkbox"> Allow —/– dashes</label>  
-          </div>
-        </div>
-        <div  style="text-align:left; font-size:80%;">This will allow Em/En dashes in the story.</div>
-      </div>
-    </div>
-    <div class="modalHeader"> <!--Global Setting-->
-      <div class="storySettingsModalTitleRow">
-        <div style="font-weight:bold;">
-          Global Settings <span id="welcomeResetEl" hidden style="font-size:0.7rem; font-weight:normal; margin-left:10px; cursor:pointer; text-decoration:underline;" onclick="delete localStorage.welcomeComplete; this.hidden=true">(reset welcome prompt)</span>
-        </div>
-      </div>
-    </div>
-    <div class="modalRow modalSectionRow"> <!--Naming Scheme / Formatting-->
-      <div class="modalSection modalSectionHalf"> <!--Save File Timestamp-->
-        <div class="modalSectionTitle">Save File Timestamp</div>
-          <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center;">
-            <label><input id="saveFileTimestampEl" oninput="localStorage.saveFileTimestamp=this.checked ? '1' : '';" type="checkbox"> Disable Timestamp</label>  
-          </div>
-        </div>
-        <div  style="text-align:left; font-size:80%;">Removes timestamp from save files</div>
-      </div>
-      <div class="modalSection modalSectionHalf"> <!--Save File Suffix-->
-        <div class="modalSectionTitle">Save File Suffix</div>
-          <div class="modalRow themeInlineRow">
-          <div class="modalRow" style="align-items:center; gap:0.35rem;  align-items:center; margin-top:0;">
-            <input id="saveFileSuffixEl" oninput="localStorage.saveFileSuffix=this.value" placeholder="pfstory (default)">
-          </div>
-        </div>
-        <div  style="text-align:left; font-size:80%;">Example: StoryName.pfstory.json</div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -2679,8 +2681,6 @@ else ai({preload:true});
     z-index: 9999960;
     display: flex;
     flex-direction: row;
-    padding: 0.75rem;
-    padding-right: 0.5rem;
     gap: 0.5rem;
   }
 
@@ -2688,6 +2688,8 @@ else ai({preload:true});
     display: flex;
     flex-direction: column;
     gap: 5px;
+    padding-top: 0.75rem;
+    padding-right: 0.5rem;
   }
 
   #toolPanelSidebarContainer > button.selected {
@@ -2696,6 +2698,9 @@ else ai({preload:true});
 
   #toolPanelTabContentContainer {
     flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem;
+    padding-right: 0;
   }
 
   /* Notepad Panel */
