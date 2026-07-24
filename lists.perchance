@@ -918,7 +918,7 @@ updateStoryHeaderVisibility() =>
     let hideHeaderButtons = (isFresh && !hasContent && !editorVisible);
     if(typeof openStoriesPanelBtn !== "undefined") openStoriesPanelBtn.hidden = hideHeaderButtons;
     if(typeof storyTitleCtn !== "undefined") storyTitleCtn.hidden = hideHeaderButtons;
-    if(typeof openNotepadBtn !== "undefined") openNotepadBtn.hidden = hideHeaderButtons;
+    if(typeof openToolPanelBtn !== "undefined") openToolPanelBtn.hidden = hideHeaderButtons;
     storyHeaderBar.hidden = hideHeaderButtons;
   } catch(e) { console.error(e); }
 
@@ -2773,9 +2773,9 @@ async autoUpdateBibleSection(options) =>
       localStorage.storySoFar = storySoFarEl.value;
     }
   closeToolPanel();
-  Object.assign(openNotepadBtn, {
+  Object.assign(openToolPanelBtn, {
     disabled: true,
-    innerHTML: `${icon("spinner spin-pulse")} Notepad`,
+    innerHTML: `${icon("spinner spin-pulse")} Tools`,
     title: "Bible Updating..."
   });
 
@@ -2833,9 +2833,9 @@ async autoUpdateBibleSection(options) =>
         requestSaveCurrentStory({debounceMs: 400});
       }
     }
-    Object.assign(openNotepadBtn, {
+    Object.assign(openToolPanelBtn, {
       disabled: false,
-      innerHTML: `${icon("table-list")} Notepad`,
+      innerHTML: `${icon("tools")} Tools`,
       title: ""
     });
     
@@ -2908,7 +2908,7 @@ async generateBibleSection(options) =>
   storyBibleDeleteBtn.disabled = true;
   storyBibleStopBtn.hidden = false;
   storyBibleLoader.hidden = false;
-  closeNotepadBtn.disabled = true;
+  closeToolPanelBtn.disabled = true;
   notepadScopeSelectEl.disabled = true;
   notepadTabsSelectEl.disabled = true;
   notepadBibleFooterCtn.hidden = true;
@@ -3001,7 +3001,7 @@ async generateBibleSection(options) =>
     storyBibleGenerateBtn.disabled = false;
     storyBibleStopBtn.hidden = true;
     storyBibleLoader.hidden = true;
-    closeNotepadBtn.disabled = false;
+    closeToolPanelBtn.disabled = false;
     notepadScopeSelectEl.disabled = false;
     notepadTabsSelectEl.disabled = false;
     window.generatingBibleSection[bibleSection] = false;
@@ -3921,6 +3921,143 @@ applyNotebookSettingsFromStoryData(data) =>
   window.currentStoryNotebookData = normalizeNotebookData(data.notebook, "story");
   if(typeof updateNotepadForCurrentStory === "function") updateNotepadForCurrentStory();
 
+////////////////
+// Tool Panel //
+////////////////
+
+tools
+  publicApi
+    openPanel = [this.getParent.openPanel]
+    closePanel = [this.getParent.closePanel]
+  defaultTools
+    notepadToolPanel
+      id = notepadToolPanel
+      order = 100
+      title = Notepad
+      icon = [literal(icon("table-list","font-size:1.0rem"))]
+      elementId = notepadPanel
+      onShow() =>
+        if (codeDebug) console.log("notepadToolPanel.onShow");
+        if(typeof notepadScopeSelectEl !== "undefined") {
+          const allowedScopes = ["app", "bible", "story"];
+          window.notepadScope = allowedScopes.includes(notepadScopeSelectEl.value) ? notepadScopeSelectEl.value : "story";
+          notepadScopeSelectEl.value = window.notepadScope;
+        }
+        ensureNotepadEditor();
+        renderNotepadTabs();
+      onHide() =>
+        if (codeDebug) console.log("notepadToolPanel.onHide");
+        saveNotepadEditorToActiveTab();
+        if(typeof notepadTabMenu !== "undefined") notepadTabMenu.hidden = true;
+  getPanelDefinitions(opts) =>
+    const tools = [
+      ...this.defaultTools.selectAll,
+      ...plugins.getEnabled().map(p => p.tools?.selectAll || []).flat(),
+    ];
+    if (opts?.sort) tools.sort((a, b) => asInt(a.order, 99999) - asInt(b.order, 99999));
+    return tools;
+  get(id) =>
+    return this.getPanelDefinitions().find(t => t.id == id);
+  selectPanel(id) =>
+    if (codeDebug) console.log("tools.selectPanel :", id);
+    const selected = this.getSelectedPanel();
+    if (selected?.id == id) return;
+    if (selected) {
+      selected.$button?.classList.remove("selected");
+      if (selected.elementId) {
+        const tabContentElement = document.getElementById(selected.elementId);
+        if (tabContentElement) {
+          tabContentElement.hidden = true;
+        }
+      }
+    }
+    const newPanel = this.get(id);
+    if (newPanel) {
+      newPanel.$button?.classList.add("selected");
+      if (newPanel.elementId) {
+        const tabContentElement = document.getElementById(newPanel.elementId);
+        if (tabContentElement) {
+          tabContentElement.hidden = false;
+        }
+      }
+    }
+  getSelectedPanel() =>
+    return this.getPanelDefinitions().find(t => t.$button?.classList.contains("selected"));
+  openPanel(id) =>
+    if (typeof toolPanel === "undefined") return;
+    this.refreshPanelButtons();
+    if (id) this.selectPanel(id);
+    let selectedPanel = this.getSelectedPanel();
+    if (!selectedPanel) {
+      selectedPanel = this.getPanelDefinitions({sort:true})[0];
+      //console.log("tools.openPanel :", selectedPanel);
+      this.selectPanel(selectedPanel.id);
+    }
+    selectedPanel.onShow?.();
+    toolPanel.hidden = false;
+    requestAnimationFrame(() => {
+      document.body.classList.add("toolPanelOpen");
+      updateToolPanelOverlayMode();
+    });
+    setupToolPanelResizer();
+  closePanel() =>
+    if (typeof toolPanel === "undefined") return;
+    this.getSelectedPanel()?.onHide?.();
+    document.body.classList.remove("toolPanelOpen");
+    document.body.classList.remove("toolPanelOverlayMode");
+    if (typeof toolPanelOverlay !== "undefined") toolPanelOverlay.hidden = true;
+    setTimeout(() => {
+      if (!document.body.classList.contains("toolPanelOpen")) toolPanel.hidden = true;
+    }, 160);
+  refreshPanelButtons() =>
+    const tools = this.getPanelDefinitions({sort:true});
+    // Remove everything from the button container except for the close button.
+    // This could be done more intelligently by comparing the existing buttons and which buttons should be there,
+    // but that isn't necessary at this point in time because I expect this function to be called infrequently
+    // (only when plugins are loaded/unloaded).
+    const buttonContainer = toolPanelSidebarContainer;
+    for (let i = buttonContainer.children.length - 1; i >= 0; i--) {
+      const child = buttonContainer.children[i];
+      if (child.id !== "closeToolPanelBtn") {
+        buttonContainer.removeChild(child);
+      }
+    }
+    // Create and insert tool buttons.
+    tools.forEach(tool => {
+      const button = document.createElement("button");
+      button.classList.add("btn-icon", "toolPanelButton");
+      button.title = tool.title;
+      button.style.width = "37px";
+      button.style.height = "37px";
+      // TODO: Use a default icon if one isn't specified.
+      button.innerHTML = tool.icon;
+      button.onclick = () => tools.showPanel(tool.id);
+      buttonContainer.appendChild(button);
+      tool.$button = button;
+    });
+  // runLocked(fn) =>
+  //   this.lock();
+  //   try {
+  //     fn();
+  //   } finally {
+  //     this.unlock();
+  //   }
+  // lock() =>
+  // unlock() =>
+
+asInt(value, defaultValue) =>
+  if (typeof value === "undefined") {
+    return defaultValue;
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  return parseInt(value);
+
+//////////////
+// Notebook //
+//////////////
+
 notepadApi
   getScope = [getNotebookScope]
   setScope = [setNotepadScope]
@@ -4214,26 +4351,13 @@ onNotepadTabsSelectChange(value) =>
   setActiveNotepadTab(value);
 
 isToolPanelOpen() =>
-  return document.body.classList.contains("notepadOpen");
+  return document.body.classList.contains("toolPanelOpen");
 
 openToolPanel() =>
-  if(typeof toolPanel === "undefined") return;
-  toolPanel.hidden = false;
-  requestAnimationFrame(() => {
-    document.body.classList.add("notepadOpen");
-    updateNotepadOverlayMode();
-  });
-  if(typeof notepadScopeSelectEl !== "undefined") {
-    const allowedScopes = ["app", "bible", "story"];
-    window.notepadScope = allowedScopes.includes(notepadScopeSelectEl.value) ? notepadScopeSelectEl.value : "story";
-    notepadScopeSelectEl.value = window.notepadScope;
-  }
-  ensureNotepadEditor();
-  renderNotepadTabs();
-  setupNotepadResizer();
+  tools.openPanel();
 
 toggleToolPanel() =>
-  if(document.body.classList.contains("notepadOpen")) closeToolPanel();
+  if(document.body.classList.contains("toolPanelOpen")) closeToolPanel();
   else openToolPanel();
 
 openNotepadForStory() =>
@@ -4243,15 +4367,7 @@ openNotepadForStory() =>
   closeStoryToolsMenu();
 
 closeToolPanel() =>
-  if(typeof toolPanel === "undefined") return;
-  saveNotepadEditorToActiveTab();
-  document.body.classList.remove("notepadOpen");
-  document.body.classList.remove("notepadOverlayMode");
-  if(typeof notepadTabMenu !== "undefined") notepadTabMenu.hidden = true;
-  if(typeof notepadOverlay !== "undefined") notepadOverlay.hidden = true;
-  setTimeout(() => {
-    if(!document.body.classList.contains("notepadOpen")) toolPanel.hidden = true;
-  }, 160);
+  tools.closePanel();
 
 setNotepadScope(scope) =>
   saveNotepadEditorToActiveTab();
@@ -4272,17 +4388,17 @@ setNotepadScope(scope) =>
   renderNotepadTabs();
 
 addNotepadTab(name, opts) =>
-  const isNotepadOpen = isToolPanelOpen();
-  if (isNotepadOpen) saveNotepadEditorToActiveTab();
+  const isToolPanelOpen = isToolPanelOpen();
+  if (isToolPanelOpen) saveNotepadEditorToActiveTab();
   let scope = opts?.scope || getNotebookScope();
   let data = getNotebookDataForScope(scope);
   let id = `tab_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
   let title = name || `Page ${data.tabs.length + 1}`;
   let tab = {id, title, content:opts?.content??"", lastEditedTime:Date.now(), scope};
   data.tabs.push(tab);
-  if (isNotepadOpen) data.activeTabId = id;
+  if (isToolPanelOpen) data.activeTabId = id;
   setNotebookDataForScope(scope, data);
-  if (isNotepadOpen) renderNotepadTabs();
+  if (isToolPanelOpen) renderNotepadTabs();
   if(scope === "app") requestAppNotebookSaveDebounced({debounceMs:400});
   else requestSaveCurrentStory({debounceMs:400});
   return tab;
@@ -4346,35 +4462,35 @@ updateNotepadForCurrentStory() =>
     renderNotepadTabs();
   }
 
-updateNotepadOverlayMode() =>
+updateToolPanelOverlayMode() =>
   let overlayMode = window.innerWidth < 650;
-  window.notepadOverlayMode = overlayMode;
-  document.body.classList.toggle("notepadOverlayMode", overlayMode);
-  if(typeof notepadOverlay !== "undefined") {
-    let isOpen = document.body.classList.contains("notepadOpen");
-    notepadOverlay.hidden = !overlayMode || !isOpen;
+  window.toolPanelOverlayMode = overlayMode;
+  document.body.classList.toggle("toolPanelOverlayMode", overlayMode);
+  if(typeof toolPanelOverlay !== "undefined") {
+    let isOpen = document.body.classList.contains("toolPanelOpen");
+    toolPanelOverlay.hidden = !overlayMode || !isOpen;
   }
 
-setupNotepadResizer() =>
-  if(window.notepadResizerSetup) return;
-  if(typeof notepadResizeHandle === "undefined" || typeof toolPanel === "undefined") return;
-  window.notepadResizerSetup = true;
-  notepadResizeHandle.addEventListener("pointerdown", e => {
+setupToolPanelResizer() =>
+  if(window.toolPanelResizerSetup) return;
+  if(typeof toolPanelResizeHandle === "undefined" || typeof toolPanel === "undefined") return;
+  window.toolPanelResizerSetup = true;
+  toolPanelResizeHandle.addEventListener("pointerdown", e => {
     e.preventDefault();
     let startX = e.clientX;
     let startWidth = toolPanel.getBoundingClientRect().width;
-    notepadResizeHandle.setPointerCapture(e.pointerId);
+    toolPanelResizeHandle.setPointerCapture(e.pointerId);
     function onMove(ev) {
       let delta = startX - ev.clientX;
       let nextWidth = Math.max(310, startWidth + delta);
       nextWidth = Math.min(nextWidth, Math.max(310, window.innerWidth - 160));
-      document.documentElement.style.setProperty("--notepad-width", `${Math.round(nextWidth)}px`);
+      document.documentElement.style.setProperty("--tool-panel-width", `${Math.round(nextWidth)}px`);
     }
     function onUp(ev) {
-      notepadResizeHandle.releasePointerCapture(ev.pointerId);
+      toolPanelResizeHandle.releasePointerCapture(ev.pointerId);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      let width = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--notepad-width")) || toolPanel.getBoundingClientRect().width;
+      let width = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--tool-panel-width")) || toolPanel.getBoundingClientRect().width;
       localStorage.notepadWidth = Math.round(width);
     }
     window.addEventListener("pointermove", onMove);
@@ -4504,13 +4620,14 @@ plugins
   list(opts) =>
     // Note: This function does not reinitialize plugins if they're dirty. This makes it safe for plugins to use.
     const plugins = [];
-    return this.cache.get().values().forEach(entry => {
+    this.cache.get().values().forEach(entry => {
       if (!entry.instance) return;
       if (opts?.scope && entry.scope != opts.scope) return;
       if (opts?.enabled && !entry.instance.enabled) return;
       if (opts?.id && entry.instance.id != opts.id) return;
       plugins.push(entry.instance);
     });
+    return plugins;
   getEnabled() =>
     return this.list({enabled:true});
   getById(id) =>
